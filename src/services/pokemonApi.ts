@@ -1,0 +1,172 @@
+import axios from 'axios';
+import { Pokemon } from '../types/pokemon';
+
+// Configuration de l'API Tyradex
+const API_BASE_URL = 'https://tyradex.app/api/v1';
+
+// Instance axios avec configuration
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+    'User-Agent': 'Pokemania-App/1.0.0', // Header de politesse
+  },
+});
+
+// Intercepteur pour ajouter des logs et gérer les erreurs
+apiClient.interceptors.request.use(
+  (config) => {
+    console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    return config;
+  },
+  (error) => {
+    console.error('❌ API Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+apiClient.interceptors.response.use(
+  (response) => {
+    console.log(`✅ API Response: ${response.status} ${response.config.url}`);
+    return response;
+  },
+  (error) => {
+    console.error('❌ API Response Error:', error.response?.status, error.response?.data);
+    return Promise.reject(error);
+  }
+);
+
+export class PokemonAPI {
+  /**
+   * Récupère la liste complète des Pokémon
+   */
+  static async getAllPokemon(): Promise<Pokemon[]> {
+    try {
+      const response = await apiClient.get<Pokemon[]>('/pokemon');
+      return response.data;
+    } catch (error) {
+      console.error('Erreur lors du chargement de la liste des Pokémon:', error);
+      throw new Error('Impossible de charger la liste des Pokémon');
+    }
+  }
+
+  /**
+   * Récupère les détails d'un Pokémon spécifique
+   * @param id - L'identifiant du Pokémon
+   * @param region - La région (optionnel)
+   */
+  static async getPokemonById(id: number, region?: string): Promise<Pokemon> {
+    try {
+      const url = region ? `/pokemon/${id}/${region}` : `/pokemon/${id}`;
+      const response = await apiClient.get<Pokemon>(url);
+      return response.data;
+    } catch (error) {
+      console.error(`Erreur lors du chargement du Pokémon ${id}:`, error);
+      throw new Error(`Impossible de charger les détails du Pokémon ${id}`);
+    }
+  }
+
+  /**
+   * Recherche des Pokémon par nom
+   * @param query - Le terme de recherche
+   * @param allPokemon - La liste complète des Pokémon pour la recherche locale
+   */
+  static searchPokemon(query: string, allPokemon: Pokemon[]): Pokemon[] {
+    if (!query.trim()) return allPokemon;
+
+    const searchTerm = query.toLowerCase().trim();
+    
+    return allPokemon.filter(pokemon => 
+      pokemon.name.fr.toLowerCase().includes(searchTerm) ||
+      pokemon.name.en.toLowerCase().includes(searchTerm) ||
+      pokemon.pokedex_id.toString().includes(searchTerm)
+    );
+  }
+
+  /**
+   * Filtre les Pokémon par type
+   * @param type - Le type à filtrer
+   * @param allPokemon - La liste complète des Pokémon
+   */
+  static filterByType(type: string, allPokemon: Pokemon[]): Pokemon[] {
+    if (!type) return allPokemon;
+
+    return allPokemon.filter(pokemon =>
+      pokemon.types.some(pokemonType => 
+        pokemonType.name.toLowerCase() === type.toLowerCase()
+      )
+    );
+  }
+
+  /**
+   * Filtre les Pokémon par génération
+   * @param generation - La génération à filtrer
+   * @param allPokemon - La liste complète des Pokémon
+   */
+  static filterByGeneration(generation: number, allPokemon: Pokemon[]): Pokemon[] {
+    if (!generation) return allPokemon;
+
+    return allPokemon.filter(pokemon => pokemon.generation === generation);
+  }
+
+  /**
+   * Applique plusieurs filtres en même temps
+   * @param filters - Les filtres à appliquer
+   * @param allPokemon - La liste complète des Pokémon
+   */
+  static applyFilters(
+    filters: {
+      searchTerm?: string;
+      type?: string;
+      generation?: number;
+    },
+    allPokemon: Pokemon[]
+  ): Pokemon[] {
+    let result = allPokemon;
+
+    if (filters.searchTerm) {
+      result = this.searchPokemon(filters.searchTerm, result);
+    }
+
+    if (filters.type) {
+      result = this.filterByType(filters.type, result);
+    }
+
+    if (filters.generation) {
+      result = this.filterByGeneration(filters.generation, result);
+    }
+
+    return result;
+  }
+
+  /**
+   * Récupère les types uniques de tous les Pokémon
+   * @param allPokemon - La liste complète des Pokémon
+   */
+  static getUniqueTypes(allPokemon: Pokemon[]): string[] {
+    const types = new Set<string>();
+    
+    allPokemon.forEach(pokemon => {
+      pokemon.types.forEach(type => {
+        types.add(type.name);
+      });
+    });
+
+    return Array.from(types).sort();
+  }
+
+  /**
+   * Récupère les générations uniques de tous les Pokémon
+   * @param allPokemon - La liste complète des Pokémon
+   */
+  static getUniqueGenerations(allPokemon: Pokemon[]): number[] {
+    const generations = new Set<number>();
+    
+    allPokemon.forEach(pokemon => {
+      generations.add(pokemon.generation);
+    });
+
+    return Array.from(generations).sort((a, b) => a - b);
+  }
+}
