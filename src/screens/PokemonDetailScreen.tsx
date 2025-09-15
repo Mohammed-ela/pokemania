@@ -9,9 +9,11 @@ import {
   TouchableOpacity,
   Dimensions,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { PokemonDetailScreenProps } from '../types/navigation';
 import { usePokemonById } from '../hooks/usePokemon';
+import { useIsFavorite } from '../hooks/useFavorites';
 
 const { width } = Dimensions.get('window');
 
@@ -20,9 +22,27 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
   const [isShiny, setIsShiny] = useState(false);
   
   const { data: pokemon, isLoading, error } = usePokemonById(pokemonId);
+  const { isFavorite, toggleFavorite, isLoading: favoriteLoading } = useIsFavorite(pokemonId);
   
   // Utilise les données de la route si disponibles, sinon utilise les données de l'API
   const displayPokemon = pokemon || initialPokemon;
+
+  const handleFavoritePress = async () => {
+    if (!displayPokemon) return;
+    
+    try {
+      const newStatus = await toggleFavorite(displayPokemon);
+      Alert.alert(
+        newStatus ? 'Ajouté aux favoris !' : 'Retiré des favoris',
+        newStatus 
+          ? `${displayPokemon.name.fr} a été ajouté à vos favoris` 
+          : `${displayPokemon.name.fr} a été retiré de vos favoris`,
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible de modifier les favoris');
+    }
+  };
 
   if (isLoading && !initialPokemon) {
     return (
@@ -58,6 +78,17 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* En-tête avec image */}
         <View style={styles.header}>
+          {/* Bouton favori en haut à droite */}
+          <TouchableOpacity
+            style={styles.favoriteButton}
+            onPress={handleFavoritePress}
+            disabled={favoriteLoading}
+          >
+            <Text style={styles.favoriteIcon}>
+              {isFavorite ? '⭐' : '☆'}
+            </Text>
+          </TouchableOpacity>
+
           <View style={styles.imageContainer}>
             <Image
               source={{ 
@@ -145,6 +176,55 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
             ))}
           </View>
         </View>
+
+        {/* Faiblesses et Résistances */}
+        {displayPokemon.resistances && displayPokemon.resistances.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Faiblesses et Résistances</Text>
+            <View style={styles.resistancesContainer}>
+              {displayPokemon.resistances.map((resistance, index) => (
+                <View key={index} style={styles.resistanceItem}>
+                  <View style={[
+                    styles.resistanceTypeTag, 
+                    { backgroundColor: getTypeColor(resistance.name) }
+                  ]}>
+                    <Text style={styles.resistanceTypeName}>{resistance.name}</Text>
+                  </View>
+                  <View style={[
+                    styles.resistanceMultiplier,
+                    getMultiplierStyle(resistance.multiplier)
+                  ]}>
+                    <Text style={[
+                      styles.resistanceMultiplierText,
+                      getMultiplierTextStyle(resistance.multiplier)
+                    ]}>
+                      ×{resistance.multiplier}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+            
+            {/* Légende */}
+            <View style={styles.legendContainer}>
+              <Text style={styles.legendTitle}>Légende :</Text>
+              <View style={styles.legendItems}>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendColor, styles.weaknessColor]} />
+                  <Text style={styles.legendText}>×2+ Faiblesse</Text>
+                </View>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendColor, styles.resistanceColor]} />
+                  <Text style={styles.legendText}>×0.5- Résistance</Text>
+                </View>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendColor, styles.immunityColor]} />
+                  <Text style={styles.legendText}>×0 Immunité</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -201,6 +281,21 @@ const getTypeColor = (type: string): string => {
   return typeColors[type] || '#68A090';
 };
 
+// Fonction utilitaire pour les styles des multiplicateurs
+const getMultiplierStyle = (multiplier: number) => {
+  if (multiplier === 0) return styles.immunityColor;
+  if (multiplier < 1) return styles.resistanceColor;
+  if (multiplier > 1) return styles.weaknessColor;
+  return styles.neutralColor;
+};
+
+const getMultiplierTextStyle = (multiplier: number) => {
+  if (multiplier === 0) return styles.immunityText;
+  if (multiplier < 1) return styles.resistanceText;
+  if (multiplier > 1) return styles.weaknessText;
+  return styles.neutralText;
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -236,6 +331,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
+    position: 'relative',
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  favoriteIcon: {
+    fontSize: 20,
   },
   imageContainer: {
     alignItems: 'center',
@@ -372,6 +488,100 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#8B5CF6',
     fontStyle: 'italic',
+  },
+  // Styles pour les résistances
+  resistancesContainer: {
+    gap: 8,
+  },
+  resistanceItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+  },
+  resistanceTypeTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  resistanceTypeName: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  resistanceMultiplier: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    minWidth: 50,
+    alignItems: 'center',
+  },
+  resistanceMultiplierText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  // Couleurs pour les multiplicateurs
+  weaknessColor: {
+    backgroundColor: '#EF4444',
+  },
+  resistanceColor: {
+    backgroundColor: '#22C55E',
+  },
+  immunityColor: {
+    backgroundColor: '#6B7280',
+  },
+  neutralColor: {
+    backgroundColor: '#E5E7EB',
+  },
+  // Styles de texte pour les multiplicateurs
+  weaknessText: {
+    color: '#FFFFFF',
+  },
+  resistanceText: {
+    color: '#FFFFFF',
+  },
+  immunityText: {
+    color: '#FFFFFF',
+  },
+  neutralText: {
+    color: '#374151',
+  },
+  // Légende
+  legendContainer: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 8,
+  },
+  legendTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  legendItems: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  legendText: {
+    fontSize: 12,
+    color: '#6B7280',
   },
 });
 
