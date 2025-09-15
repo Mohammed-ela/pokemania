@@ -77,7 +77,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
               </Text>
             </TouchableOpacity>
             
-            {types.map((type) => (
+            {types?.map((type) => (
               <TouchableOpacity
                 key={type}
                 style={[
@@ -116,7 +116,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
               </Text>
             </TouchableOpacity>
             
-            {generations.map((generation) => (
+            {generations?.map((generation) => (
               <TouchableOpacity
                 key={generation}
                 style={[
