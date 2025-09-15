@@ -55,11 +55,14 @@ export const useFavorites = () => {
   const toggleFavorite = useCallback(async (pokemon: Pokemon) => {
     try {
       const isFav = favorites.some(fav => fav.pokedex_id === pokemon.pokedex_id);
+      console.log('🔄 Toggle favorite - Current state:', isFav, 'for', pokemon.name.fr);
       
       if (isFav) {
+        console.log('➖ Removing from favorites');
         await removeFromFavorites(pokemon.pokedex_id);
         return false;
       } else {
+        console.log('➕ Adding to favorites');
         await addToFavorites(pokemon);
         return true;
       }

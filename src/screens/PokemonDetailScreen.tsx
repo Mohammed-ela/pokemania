@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { PokemonDetailScreenProps } from '../types/navigation';
 import { usePokemonById } from '../hooks/usePokemon';
-import { useIsFavorite } from '../hooks/useFavorites';
+import { useFavorites } from '../hooks/useFavorites';
 
 const { width } = Dimensions.get('window');
 
@@ -21,7 +21,11 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
   const [isShiny, setIsShiny] = useState(false);
   
   const { data: pokemon, isLoading, error } = usePokemonById(pokemonId);
-  const { isFavorite, toggleFavorite, isLoading: favoriteLoading } = useIsFavorite(pokemonId);
+  const { favorites, toggleFavorite: toggleFav } = useFavorites();
+  
+  // Calculer si c'est un favori à partir de la liste complète
+  const isFavorite = favorites.some(fav => fav.pokedex_id === pokemonId);
+  const favoriteLoading = false;
   
   // Utilise les données de la route si disponibles, sinon utilise les données de l'API
   const displayPokemon = pokemon || initialPokemon;
@@ -30,7 +34,8 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
     if (!displayPokemon) return;
     
     try {
-      await toggleFavorite(displayPokemon);
+      console.log('⭐ Toggle favorite for:', displayPokemon.name.fr);
+      await toggleFav(displayPokemon);
       // Pas de pop-up, juste le changement visuel de l'étoile
     } catch (error) {
       // Optionnel : un simple log en cas d'erreur
