@@ -90,7 +90,7 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Types</Text>
           <View style={styles.typesContainer}>
-            {displayPokemon.types.map((type, index) => (
+            {displayPokemon.types?.map((type, index) => (
               <View
                 key={index}
                 style={[styles.typeTag, { backgroundColor: getTypeColor(type.name) }]}
@@ -137,7 +137,7 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Talents</Text>
           <View style={styles.talentsContainer}>
-            {displayPokemon.talents.map((talent, index) => (
+            {displayPokemon.talents?.map((talent, index) => (
               <View key={index} style={styles.talentItem}>
                 <Text style={styles.talentName}>{talent.name}</Text>
                 {talent.tc && <Text style={styles.hiddenTalent}>(Talent Caché)</Text>}
