@@ -1,53 +1,57 @@
+import * as SecureStore from 'expo-secure-store';
 import { Pokemon } from '../types/pokemon';
 
 const FAVORITES_KEY = 'pokemon_favorites';
 
-// Service de stockage unifié (localStorage pour Web, AsyncStorage pour mobile plus tard)
+// Service de stockage Expo (compatible Web + Mobile)
 const storage = {
   async getItem(key: string): Promise<string | null> {
     try {
-      // Pour React Native Web, utilise localStorage
-      if (typeof window !== 'undefined' && window.localStorage) {
-        return localStorage.getItem(key);
-      }
-      // Pour React Native mobile (futur)
-      // return await AsyncStorage.getItem(key);
-      return null;
-    } catch {
+      const value = await SecureStore.getItemAsync(key);
+      console.log(`🔍 Getting ${key}:`, value ? 'Found' : 'Not found');
+      return value;
+    } catch (error) {
+      console.error('❌ Erreur getItem:', error);
       return null;
     }
   },
 
   async setItem(key: string, value: string): Promise<void> {
     try {
-      // Pour React Native Web, utilise localStorage
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem(key, value);
-        return;
-      }
-      // Pour React Native mobile (futur)
-      // await AsyncStorage.setItem(key, value);
+      await SecureStore.setItemAsync(key, value);
+      console.log(`✅ Saved ${key}:`, value.length, 'characters');
+      
+      // Vérification immédiate
+      const saved = await SecureStore.getItemAsync(key);
+      console.log(`🔍 Verification ${key}:`, saved ? 'Found' : 'Not found');
     } catch (error) {
-      console.error('Erreur de stockage:', error);
+      console.error('❌ Erreur setItem:', error);
     }
   },
 
   async removeItem(key: string): Promise<void> {
     try {
-      // Pour React Native Web, utilise localStorage
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.removeItem(key);
-        return;
-      }
-      // Pour React Native mobile (futur)
-      // await AsyncStorage.removeItem(key);
+      await SecureStore.deleteItemAsync(key);
+      console.log(`🗑️ Removed ${key}`);
     } catch (error) {
-      console.error('Erreur de suppression:', error);
+      console.error('❌ Erreur removeItem:', error);
     }
   }
 };
 
 export class FavoritesService {
+  /**
+   * Debug: Affiche le contenu du SecureStore
+   */
+  static async debugStorage(): Promise<void> {
+    try {
+      const value = await SecureStore.getItemAsync(FAVORITES_KEY);
+      console.log('🔧 SecureStore pokemon_favorites:', value);
+    } catch (error) {
+      console.log('🔧 SecureStore non disponible:', error);
+    }
+  }
+
   /**
    * Récupère la liste des Pokémon favoris
    */

@@ -13,6 +13,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { FavoritesScreenProps } from '../types/navigation';
 import { Pokemon } from '../types/pokemon';
 import { useFavorites } from '../hooks/useFavorites';
+import { FavoritesService } from '../services/favoritesService';
 
 const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
   const { favorites, isLoading, clearAllFavorites, refetch } = useFavorites();
@@ -20,6 +21,7 @@ const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
   // Debug simple
   useEffect(() => {
     console.log('📋 Favorites changed:', favorites.length);
+    FavoritesService.debugStorage(); // Debug SecureStore
   }, [favorites]);
 
   const renderPokemonItem = ({ item }: { item: Pokemon }) => (
