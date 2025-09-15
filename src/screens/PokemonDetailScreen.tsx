@@ -96,7 +96,7 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
               onPress={() => setIsShiny(!isShiny)}
             >
               <Text style={styles.shinyButtonText}>
-                {isShiny ? '✨ Shiny' : '⭐ Normal'}
+                {isShiny ? '✨ Shiny' : '⭐ Shiny'}
               </Text>
             </TouchableOpacity>
           </View>
