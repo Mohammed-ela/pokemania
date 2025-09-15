@@ -33,7 +33,7 @@ const AppNavigator: React.FC = () => {
           name="Home"
           component={HomeScreen}
           options={{
-            title: 'Pokédex',
+            title: 'Pokemania',
             headerStyle: {
               backgroundColor: '#DC2626',
             },
