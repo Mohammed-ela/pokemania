@@ -54,10 +54,17 @@ export class FavoritesService {
   static async getFavorites(): Promise<Pokemon[]> {
     try {
       const favoritesJson = await storage.getItem(FAVORITES_KEY);
-      if (!favoritesJson) return [];
+      console.log('📁 Raw favorites from storage:', favoritesJson);
+      
+      if (!favoritesJson) {
+        console.log('📁 No favorites found in storage');
+        return [];
+      }
       
       const favorites = JSON.parse(favoritesJson);
-      return Array.isArray(favorites) ? favorites : [];
+      const result = Array.isArray(favorites) ? favorites : [];
+      console.log('📁 Parsed favorites:', result.length, 'items');
+      return result;
     } catch (error) {
       console.error('Erreur lors de la récupération des favoris:', error);
       return [];
@@ -69,7 +76,9 @@ export class FavoritesService {
    */
   static async saveFavorites(favorites: Pokemon[]): Promise<void> {
     try {
+      console.log('💾 Saving favorites:', favorites.length, 'items');
       await storage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+      console.log('💾 Favorites saved successfully');
     } catch (error) {
       console.error('Erreur lors de la sauvegarde des favoris:', error);
       throw new Error('Impossible de sauvegarder les favoris');

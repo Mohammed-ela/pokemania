@@ -326,6 +326,7 @@ const getMultiplierTextStyle = (multiplier: number) => {
   return styles.neutralText;
 };
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

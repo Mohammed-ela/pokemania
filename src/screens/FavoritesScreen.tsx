@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,18 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { FavoritesScreenProps } from '../types/navigation';
 import { Pokemon } from '../types/pokemon';
 import { useFavorites } from '../hooks/useFavorites';
 
 const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
-  const { favorites, isLoading, clearAllFavorites } = useFavorites();
+  const { favorites, isLoading, clearAllFavorites, refetch } = useFavorites();
+
+  // Debug simple
+  useEffect(() => {
+    console.log('📋 Favorites changed:', favorites.length);
+  }, [favorites]);
 
   const renderPokemonItem = ({ item }: { item: Pokemon }) => (
     <TouchableOpacity
