@@ -18,7 +18,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppNavigator />
-      <StatusBar style="light" backgroundColor="#DC2626" />
+      <StatusBar style="light" />
     </QueryClientProvider>
   );
 }
