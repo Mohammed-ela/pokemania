@@ -73,15 +73,21 @@ export class PokemonAPI {
    * @param allPokemon - La liste complète des Pokémon pour la recherche locale
    */
   static searchPokemon(query: string, allPokemon: Pokemon[]): Pokemon[] {
-    if (!query.trim()) return allPokemon;
+    if (!query.trim() || !allPokemon) return allPokemon || [];
 
     const searchTerm = query.toLowerCase().trim();
     
-    return allPokemon.filter(pokemon => 
-      pokemon.name.fr.toLowerCase().includes(searchTerm) ||
-      pokemon.name.en.toLowerCase().includes(searchTerm) ||
-      pokemon.pokedex_id.toString().includes(searchTerm)
-    );
+    return allPokemon.filter(pokemon => {
+      if (!pokemon) return false;
+      
+      const frName = pokemon.name?.fr?.toLowerCase() || '';
+      const enName = pokemon.name?.en?.toLowerCase() || '';
+      const pokemonId = pokemon.pokedex_id?.toString() || '';
+      
+      return frName.includes(searchTerm) ||
+             enName.includes(searchTerm) ||
+             pokemonId.includes(searchTerm);
+    });
   }
 
   /**
@@ -90,13 +96,16 @@ export class PokemonAPI {
    * @param allPokemon - La liste complète des Pokémon
    */
   static filterByType(type: string, allPokemon: Pokemon[]): Pokemon[] {
-    if (!type) return allPokemon;
+    if (!type || !allPokemon) return allPokemon || [];
 
-    return allPokemon.filter(pokemon =>
-      pokemon.types.some(pokemonType => 
+    return allPokemon.filter(pokemon => {
+      if (!pokemon.types || !Array.isArray(pokemon.types)) return false;
+      
+      return pokemon.types.some(pokemonType => 
+        pokemonType && pokemonType.name && 
         pokemonType.name.toLowerCase() === type.toLowerCase()
-      )
-    );
+      );
+    });
   }
 
   /**
@@ -105,9 +114,11 @@ export class PokemonAPI {
    * @param allPokemon - La liste complète des Pokémon
    */
   static filterByGeneration(generation: number, allPokemon: Pokemon[]): Pokemon[] {
-    if (!generation) return allPokemon;
+    if (!generation || !allPokemon) return allPokemon || [];
 
-    return allPokemon.filter(pokemon => pokemon.generation === generation);
+    return allPokemon.filter(pokemon => 
+      pokemon && pokemon.generation === generation
+    );
   }
 
   /**
@@ -123,7 +134,7 @@ export class PokemonAPI {
     },
     allPokemon: Pokemon[]
   ): Pokemon[] {
-    let result = allPokemon;
+    let result = allPokemon || [];
 
     if (filters.searchTerm) {
       result = this.searchPokemon(filters.searchTerm, result);
@@ -147,8 +158,8 @@ export class PokemonAPI {
   static getUniqueTypes(allPokemon: Pokemon[]): string[] {
     const types = new Set<string>();
     
-    allPokemon.forEach(pokemon => {
-      pokemon.types.forEach(type => {
+    allPokemon?.forEach(pokemon => {
+      pokemon.types?.forEach(type => {
         types.add(type.name);
       });
     });
@@ -163,7 +174,7 @@ export class PokemonAPI {
   static getUniqueGenerations(allPokemon: Pokemon[]): number[] {
     const generations = new Set<number>();
     
-    allPokemon.forEach(pokemon => {
+    allPokemon?.forEach(pokemon => {
       generations.add(pokemon.generation);
     });
 
