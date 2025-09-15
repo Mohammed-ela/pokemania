@@ -21,7 +21,7 @@ const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
   // Debug simple
   useEffect(() => {
     console.log('📋 Favorites changed:', favorites.length);
-    FavoritesService.debugStorage(); // Debug SecureStore
+    FavoritesService.debugStorage(); // Debug AsyncStorage
   }, [favorites]);
 
   const renderPokemonItem = ({ item }: { item: Pokemon }) => (

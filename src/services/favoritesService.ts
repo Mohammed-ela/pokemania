@@ -1,13 +1,13 @@
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Pokemon } from '../types/pokemon';
 
 const FAVORITES_KEY = 'pokemon_favorites';
 
-// Service de stockage Expo (compatible Web + Mobile)
+// Service de stockage AsyncStorage (compatible Expo Web + Mobile)
 const storage = {
   async getItem(key: string): Promise<string | null> {
     try {
-      const value = await SecureStore.getItemAsync(key);
+      const value = await AsyncStorage.getItem(key);
       console.log(`🔍 Getting ${key}:`, value ? 'Found' : 'Not found');
       return value;
     } catch (error) {
@@ -18,11 +18,11 @@ const storage = {
 
   async setItem(key: string, value: string): Promise<void> {
     try {
-      await SecureStore.setItemAsync(key, value);
+      await AsyncStorage.setItem(key, value);
       console.log(`✅ Saved ${key}:`, value.length, 'characters');
       
       // Vérification immédiate
-      const saved = await SecureStore.getItemAsync(key);
+      const saved = await AsyncStorage.getItem(key);
       console.log(`🔍 Verification ${key}:`, saved ? 'Found' : 'Not found');
     } catch (error) {
       console.error('❌ Erreur setItem:', error);
@@ -31,7 +31,7 @@ const storage = {
 
   async removeItem(key: string): Promise<void> {
     try {
-      await SecureStore.deleteItemAsync(key);
+      await AsyncStorage.removeItem(key);
       console.log(`🗑️ Removed ${key}`);
     } catch (error) {
       console.error('❌ Erreur removeItem:', error);
@@ -41,14 +41,14 @@ const storage = {
 
 export class FavoritesService {
   /**
-   * Debug: Affiche le contenu du SecureStore
+   * Debug: Affiche le contenu d'AsyncStorage
    */
   static async debugStorage(): Promise<void> {
     try {
-      const value = await SecureStore.getItemAsync(FAVORITES_KEY);
-      console.log('🔧 SecureStore pokemon_favorites:', value);
+      const value = await AsyncStorage.getItem(FAVORITES_KEY);
+      console.log('🔧 AsyncStorage pokemon_favorites:', value);
     } catch (error) {
-      console.log('🔧 SecureStore non disponible:', error);
+      console.log('🔧 AsyncStorage non disponible:', error);
     }
   }
 
