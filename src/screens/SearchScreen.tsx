@@ -156,8 +156,14 @@ const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
             <TouchableOpacity
               style={styles.viewResultsButton}
               onPress={() => {
-                // Naviguer vers la liste avec les filtres appliqués
-                navigation.navigate('PokemonList');
+                // Naviguer vers l'écran de résultats avec les filtres appliqués
+                navigation.navigate('SearchResults', {
+                  filters: {
+                    searchTerm,
+                    type: selectedType,
+                    generation: selectedGeneration,
+                  }
+                });
               }}
             >
               <Text style={styles.viewResultsButtonText}>
