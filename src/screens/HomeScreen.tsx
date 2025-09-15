@@ -18,8 +18,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       <View style={styles.content}>
         {/* Header avec logo Pokémon */}
         <View style={styles.header}>
-          <Text style={styles.title}>Pokédex</Text>
-          <Text style={styles.subtitle}>Explorez le monde des Pokémon</Text>
+          <Text style={styles.title}>Pokemania</Text>
+          <Text style={styles.subtitle}>Pokédex de poche</Text>
+          <Text style={styles.description}>Explorez le monde des Pokémon</Text>
         </View>
 
         {/* Image principale */}
@@ -56,6 +57,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           <Text style={styles.footerText}>
             Données fournies par l'API Tyradex
           </Text>
+          <Text style={styles.footerVersion}>
+            Pokemania v1.0.0
+          </Text>
         </View>
       </View>
     </SafeAreaView>
@@ -86,6 +90,13 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   subtitle: {
+    fontSize: 18,
+    color: '#DC2626',
+    textAlign: 'center',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  description: {
     fontSize: 16,
     color: '#64748B',
     textAlign: 'center',
@@ -135,6 +146,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#94A3B8',
     textAlign: 'center',
+    marginBottom: 4,
+  },
+  footerVersion: {
+    fontSize: 10,
+    color: '#CBD5E1',
+    textAlign: 'center',
+    fontWeight: '500',
   },
 });
 

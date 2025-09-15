@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   Dimensions,
   SafeAreaView,
-  Alert,
 } from 'react-native';
 import { PokemonDetailScreenProps } from '../types/navigation';
 import { usePokemonById } from '../hooks/usePokemon';
@@ -31,16 +30,11 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
     if (!displayPokemon) return;
     
     try {
-      const newStatus = await toggleFavorite(displayPokemon);
-      Alert.alert(
-        newStatus ? 'Ajouté aux favoris !' : 'Retiré des favoris',
-        newStatus 
-          ? `${displayPokemon.name.fr} a été ajouté à vos favoris` 
-          : `${displayPokemon.name.fr} a été retiré de vos favoris`,
-        [{ text: 'OK' }]
-      );
+      await toggleFavorite(displayPokemon);
+      // Pas de pop-up, juste le changement visuel de l'étoile
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de modifier les favoris');
+      // Optionnel : un simple log en cas d'erreur
+      console.error('Erreur lors de la modification des favoris:', error);
     }
   };
 
@@ -178,53 +172,89 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
         </View>
 
         {/* Faiblesses et Résistances */}
-        {displayPokemon.resistances && displayPokemon.resistances.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Faiblesses et Résistances</Text>
-            <View style={styles.resistancesContainer}>
-              {displayPokemon.resistances.map((resistance, index) => (
-                <View key={index} style={styles.resistanceItem}>
-                  <View style={[
-                    styles.resistanceTypeTag, 
-                    { backgroundColor: getTypeColor(resistance.name) }
-                  ]}>
-                    <Text style={styles.resistanceTypeName}>{resistance.name}</Text>
+        {displayPokemon.resistances && displayPokemon.resistances.length > 0 && (() => {
+          // Trier les résistances par catégories pour une meilleure UX
+          const sortedResistances = [...displayPokemon.resistances].sort((a, b) => {
+            // Ordre : Immunités (0) → Résistances (<1) → Normal (1) → Faiblesses (>1)
+            if (a.multiplier === 0 && b.multiplier !== 0) return -1;
+            if (b.multiplier === 0 && a.multiplier !== 0) return 1;
+            if (a.multiplier < 1 && b.multiplier >= 1) return -1;
+            if (b.multiplier < 1 && a.multiplier >= 1) return 1;
+            if (a.multiplier === 1 && b.multiplier > 1) return -1;
+            if (b.multiplier === 1 && a.multiplier > 1) return 1;
+            // Trier par multiplier dans chaque catégorie
+            return a.multiplier - b.multiplier;
+          });
+
+          const immunities = sortedResistances.filter(r => r.multiplier === 0);
+          const resistances = sortedResistances.filter(r => r.multiplier > 0 && r.multiplier < 1);
+          const weaknesses = sortedResistances.filter(r => r.multiplier > 1);
+
+          return (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Faiblesses et Résistances</Text>
+              
+              {/* Immunités */}
+              {immunities.length > 0 && (
+                <View style={styles.categoryContainer}>
+                  <Text style={styles.categoryTitle}>🛡️ Immunités</Text>
+                  <View style={styles.typesGrid}>
+                    {immunities.map((resistance, index) => (
+                      <View key={index} style={styles.typeGridItem}>
+                        <View style={[
+                          styles.resistanceTypeTag, 
+                          { backgroundColor: getTypeColor(resistance.name) }
+                        ]}>
+                          <Text style={styles.resistanceTypeName}>{resistance.name}</Text>
+                        </View>
+                      </View>
+                    ))}
                   </View>
-                  <View style={[
-                    styles.resistanceMultiplier,
-                    getMultiplierStyle(resistance.multiplier)
-                  ]}>
-                    <Text style={[
-                      styles.resistanceMultiplierText,
-                      getMultiplierTextStyle(resistance.multiplier)
-                    ]}>
-                      ×{resistance.multiplier}
-                    </Text>
+                </View>
+              )}
+
+              {/* Résistances */}
+              {resistances.length > 0 && (
+                <View style={styles.categoryContainer}>
+                  <Text style={styles.categoryTitle}>🔰 Résistances</Text>
+                  <View style={styles.typesGrid}>
+                    {resistances.map((resistance, index) => (
+                      <View key={index} style={styles.typeGridItem}>
+                        <View style={[
+                          styles.resistanceTypeTag, 
+                          { backgroundColor: getTypeColor(resistance.name) }
+                        ]}>
+                          <Text style={styles.resistanceTypeName}>{resistance.name}</Text>
+                        </View>
+                        <Text style={styles.multiplierText}>×{resistance.multiplier}</Text>
+                      </View>
+                    ))}
                   </View>
                 </View>
-              ))}
+              )}
+
+              {/* Faiblesses */}
+              {weaknesses.length > 0 && (
+                <View style={styles.categoryContainer}>
+                  <Text style={styles.categoryTitle}>⚡ Faiblesses</Text>
+                  <View style={styles.typesGrid}>
+                    {weaknesses.map((resistance, index) => (
+                      <View key={index} style={styles.typeGridItem}>
+                        <View style={[
+                          styles.resistanceTypeTag, 
+                          { backgroundColor: getTypeColor(resistance.name) }
+                        ]}>
+                          <Text style={styles.resistanceTypeName}>{resistance.name}</Text>
+                        </View>
+                        <Text style={styles.multiplierText}>×{resistance.multiplier}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
             </View>
-            
-            {/* Légende */}
-            <View style={styles.legendContainer}>
-              <Text style={styles.legendTitle}>Légende :</Text>
-              <View style={styles.legendItems}>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendColor, styles.weaknessColor]} />
-                  <Text style={styles.legendText}>×2+ Faiblesse</Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendColor, styles.resistanceColor]} />
-                  <Text style={styles.legendText}>×0.5- Résistance</Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendColor, styles.immunityColor]} />
-                  <Text style={styles.legendText}>×0 Immunité</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        )}
+          );
+        })()}
       </ScrollView>
     </SafeAreaView>
   );
@@ -489,99 +519,43 @@ const styles = StyleSheet.create({
     color: '#8B5CF6',
     fontStyle: 'italic',
   },
-  // Styles pour les résistances
-  resistancesContainer: {
+  // Styles pour les résistances (nouvelle version organisée)
+  categoryContainer: {
+    marginBottom: 16,
+  },
+  categoryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 12,
+  },
+  typesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
-  resistanceItem: {
-    flexDirection: 'row',
+  typeGridItem: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 8,
+    marginBottom: 8,
   },
   resistanceTypeTag: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    minWidth: 80,
+    minWidth: 70,
     alignItems: 'center',
+    marginBottom: 4,
   },
   resistanceTypeName: {
     fontSize: 12,
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  resistanceMultiplier: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    minWidth: 50,
-    alignItems: 'center',
-  },
-  resistanceMultiplierText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  // Couleurs pour les multiplicateurs
-  weaknessColor: {
-    backgroundColor: '#EF4444',
-  },
-  resistanceColor: {
-    backgroundColor: '#22C55E',
-  },
-  immunityColor: {
-    backgroundColor: '#6B7280',
-  },
-  neutralColor: {
-    backgroundColor: '#E5E7EB',
-  },
-  // Styles de texte pour les multiplicateurs
-  weaknessText: {
-    color: '#FFFFFF',
-  },
-  resistanceText: {
-    color: '#FFFFFF',
-  },
-  immunityText: {
-    color: '#FFFFFF',
-  },
-  neutralText: {
-    color: '#374151',
-  },
-  // Légende
-  legendContainer: {
-    marginTop: 16,
-    padding: 12,
-    backgroundColor: '#F1F5F9',
-    borderRadius: 8,
-  },
-  legendTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  legendItems: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  legendText: {
+  multiplierText: {
     fontSize: 12,
+    fontWeight: '600',
     color: '#6B7280',
+    textAlign: 'center',
   },
 });
 
