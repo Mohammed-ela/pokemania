@@ -93,12 +93,12 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
             <View style={styles.anecdoteContainer}>
               <Text style={styles.anecdoteText}>
                 <Text style={styles.anecdoteBold}>MissingNo.</Text> est l'un des bugs les plus célèbres de l'histoire du jeu vidéo ! 
-                Découvert dans Pokémon Rouge et Bleu, ce "Pokémon fantôme" apparaissait lors du fameux glitch de l'Île Cinabre.
+                Découvert dans Pokémon Rouge et Bleu, ce "Pokémon fantôme" apparaissait lors du fameux glitch de Cramois'Île.
               </Text>
               
               <Text style={styles.anecdoteText}>
                 💡 <Text style={styles.anecdoteBold}>Le glitch :</Text> Parler au vieil homme de Viridian qui enseigne à capturer un Pokémon, 
-                puis voler immédiatement vers l'Île Cinabre et surfer sur la côte Est.
+                puis voler immédiatement vers Cramois'Île et surfer sur la côte Est.
               </Text>
               
               <Text style={styles.anecdoteText}>
