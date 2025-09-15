@@ -11,13 +11,15 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 import { PokemonListScreenProps } from '../types/navigation';
 import { Pokemon } from '../types/pokemon';
 import { useAllPokemon, useFilteredPokemon } from '../hooks/usePokemon';
 
 const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const { data: allPokemon, isLoading, error } = useAllPokemon();
+  const queryClient = useQueryClient();
+  const { data: allPokemon, isLoading, error, refetch } = useAllPokemon();
 
   // Filtrage des Pokémon basé sur la recherche
   const filteredPokemon = useFilteredPokemon(allPokemon, {
@@ -44,7 +46,7 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
         <Text style={styles.pokemonNumber}>#{item.pokedex_id.toString().padStart(3, '0')}</Text>
         <Text style={styles.pokemonName}>{item.name.fr}</Text>
         <View style={styles.typesContainer}>
-          {item.types.map((type, index) => (
+          {item.types?.map((type, index) => (
             <View
               key={index}
               style={[styles.typeTag, { backgroundColor: getTypeColor(type.name) }]}
@@ -75,7 +77,7 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
         </Text>
         <TouchableOpacity
           style={styles.retryButton}
-          onPress={() => window.location.reload()}
+          onPress={() => refetch()}
         >
           <Text style={styles.retryButtonText}>Réessayer</Text>
         </TouchableOpacity>
