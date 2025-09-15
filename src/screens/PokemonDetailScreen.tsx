@@ -67,6 +67,76 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
     );
   }
 
+  // Gestion spéciale pour le Pokémon #0 (MissingNo.)
+  if (displayPokemon.pokedex_id === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          {/* En-tête spécial pour MissingNo. */}
+          <View style={styles.header}>
+            <View style={styles.imageContainer}>
+              <Text style={styles.missingNoEmoji}>👾</Text>
+              <Text style={styles.missingNoTitle}>MissingNo.</Text>
+            </View>
+            
+            <View style={styles.basicInfo}>
+              <Text style={styles.pokemonNumber}>#000</Text>
+              <Text style={styles.pokemonName}>MissingNo.</Text>
+              <Text style={styles.pokemonNameEn}>(Missing Number)</Text>
+              <Text style={styles.category}>Pokémon Glitch</Text>
+            </View>
+          </View>
+
+          {/* Anecdote historique */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🎮 Anecdote Légendaire</Text>
+            <View style={styles.anecdoteContainer}>
+              <Text style={styles.anecdoteText}>
+                <Text style={styles.anecdoteBold}>MissingNo.</Text> est l'un des bugs les plus célèbres de l'histoire du jeu vidéo ! 
+                Découvert dans Pokémon Rouge et Bleu, ce "Pokémon fantôme" apparaissait lors du fameux glitch de l'Île Cinabre.
+              </Text>
+              
+              <Text style={styles.anecdoteText}>
+                💡 <Text style={styles.anecdoteBold}>Le glitch :</Text> Parler au vieil homme de Viridian qui enseigne à capturer un Pokémon, 
+                puis voler immédiatement vers l'Île Cinabre et surfer sur la côte Est.
+              </Text>
+              
+              <Text style={styles.anecdoteText}>
+                ✨ <Text style={styles.anecdoteBold}>Effet magique :</Text> Capturer MissingNo. dupliquait le 6ème objet de votre sac ! 
+                Les dresseurs l'utilisaient pour obtenir 99 Master Balls ou 99 Bonbons Rares.
+              </Text>
+              
+              <Text style={styles.anecdoteText}>
+                🏆 <Text style={styles.anecdoteBold}>Impact :</Text> Ce bug est devenu si iconique qu'il fait maintenant partie de la culture Pokémon. 
+                Il représente l'âge d'or des secrets cachés dans les jeux vidéo !
+              </Text>
+            </View>
+          </View>
+
+          {/* Données techniques */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>📊 Données Techniques</Text>
+            <View style={styles.technicalInfo}>
+              <Text style={styles.technicalText}>Type : Normal/Oiseau (Type 20)</Text>
+              <Text style={styles.technicalText}>Niveau : Variable (souvent 80+)</Text>
+              <Text style={styles.technicalText}>Attaque : Variable</Text>
+              <Text style={styles.technicalText}>Index Hexadécimal : 0x00</Text>
+            </View>
+          </View>
+
+          {/* Note de sécurité */}
+          <View style={styles.warningSection}>
+            <Text style={styles.warningTitle}>⚠️ Note Historique</Text>
+            <Text style={styles.warningText}>
+              Dans les jeux originaux, MissingNo. pouvait parfois corrompre les données de sauvegarde. 
+              Heureusement, dans Pokemania, vous pouvez l'admirer en toute sécurité ! 😄
+            </Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -311,20 +381,6 @@ const getTypeColor = (type: string): string => {
   return typeColors[type] || '#68A090';
 };
 
-// Fonction utilitaire pour les styles des multiplicateurs
-const getMultiplierStyle = (multiplier: number) => {
-  if (multiplier === 0) return styles.immunityColor;
-  if (multiplier < 1) return styles.resistanceColor;
-  if (multiplier > 1) return styles.weaknessColor;
-  return styles.neutralColor;
-};
-
-const getMultiplierTextStyle = (multiplier: number) => {
-  if (multiplier === 0) return styles.immunityText;
-  if (multiplier < 1) return styles.resistanceText;
-  if (multiplier > 1) return styles.weaknessText;
-  return styles.neutralText;
-};
 
 
 const styles = StyleSheet.create({
@@ -557,6 +613,57 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#6B7280',
     textAlign: 'center',
+  },
+  // Styles spéciaux pour MissingNo.
+  missingNoEmoji: {
+    fontSize: 80,
+    marginBottom: 16,
+  },
+  missingNoTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#8B5CF6',
+    textAlign: 'center',
+  },
+  anecdoteContainer: {
+    gap: 16,
+  },
+  anecdoteText: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#374151',
+    textAlign: 'justify',
+  },
+  anecdoteBold: {
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  technicalInfo: {
+    gap: 8,
+  },
+  technicalText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontFamily: 'monospace',
+  },
+  warningSection: {
+    backgroundColor: '#FEF3C7',
+    marginVertical: 4,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: '#F59E0B',
+  },
+  warningTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#92400E',
+    marginBottom: 8,
+  },
+  warningText: {
+    fontSize: 14,
+    color: '#78350F',
+    lineHeight: 20,
   },
 });
 
