@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,11 @@ import {
   TouchableOpacity,
   Dimensions,
   SafeAreaView,
+  Animated,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
 import { PokemonDetailScreenProps } from '../types/navigation';
 import { usePokemonById } from '../hooks/usePokemon';
 import { useFavorites } from '../hooks/useFavorites';
@@ -23,6 +27,32 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
   const { data: pokemon, isLoading, error } = usePokemonById(pokemonId);
   const { favorites, toggleFavorite: toggleFav } = useFavorites();
   
+  // Animations
+  const fadeAnim = new Animated.Value(0);
+  const slideAnim = new Animated.Value(30);
+  const scaleAnim = new Animated.Value(0.9);
+  
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+  
   // Calculer si c'est un favori à partir de la liste complète
   const isFavorite = favorites.some(fav => fav.pokedex_id === pokemonId);
   const favoriteLoading = false;
@@ -34,6 +64,7 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
     if (!displayPokemon) return;
     
     try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       console.log('⭐ Toggle favorite for:', displayPokemon.name.fr);
       await toggleFav(displayPokemon);
       // Pas de pop-up, juste le changement visuel de l'étoile
@@ -41,6 +72,11 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
       // Optionnel : un simple log en cas d'erreur
       console.error('Erreur lors de la modification des favoris:', error);
     }
+  };
+
+  const handleShinyToggle = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsShiny(!isShiny);
   };
 
   if (isLoading && !initialPokemon) {
@@ -144,130 +180,209 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* En-tête avec image */}
-        <View style={styles.header}>
-          {/* Bouton favori en haut à droite */}
-          <TouchableOpacity
-            style={styles.favoriteButton}
-            onPress={handleFavoritePress}
-            disabled={favoriteLoading}
+      <LinearGradient
+        colors={['#667eea', '#764ba2', '#f093fb']}
+        style={styles.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          {/* En-tête avec image */}
+          <Animated.View 
+            style={[
+              styles.header,
+              {
+                opacity: fadeAnim,
+                transform: [
+                  { translateY: slideAnim },
+                  { scale: scaleAnim },
+                ],
+              },
+            ]}
           >
-            <Text style={styles.favoriteIcon}>
-              {isFavorite ? '⭐' : '☆'}
-            </Text>
-          </TouchableOpacity>
-
-          <View style={styles.imageContainer}>
-            <Image
-              source={{ 
-                uri: isShiny ? displayPokemon.sprites.shiny : displayPokemon.sprites.regular 
-              }}
-              style={styles.pokemonImage}
-              resizeMode="contain"
-            />
+            {/* Bouton favori en haut à droite */}
             <TouchableOpacity
-              style={styles.shinyButton}
-              onPress={() => setIsShiny(!isShiny)}
+              style={styles.favoriteButton}
+              onPress={handleFavoritePress}
+              disabled={favoriteLoading}
+              activeOpacity={0.8}
             >
-              <Text style={styles.shinyButtonText}>
-                {isShiny ? '✨ Shiny' : '⭐ Shiny'}
-              </Text>
+              <BlurView intensity={20} style={styles.favoriteBlur}>
+                <Text style={styles.favoriteIcon}>
+                  {isFavorite ? '⭐' : '☆'}
+                </Text>
+              </BlurView>
             </TouchableOpacity>
-          </View>
-          
-          <View style={styles.basicInfo}>
-            <Text style={styles.pokemonNumber}>
-              #{displayPokemon.pokedex_id.toString().padStart(3, '0')}
-            </Text>
-            <Text style={styles.pokemonName}>{displayPokemon.name.fr}</Text>
-            <Text style={styles.pokemonNameEn}>({displayPokemon.name.en})</Text>
-            <Text style={styles.category}>{displayPokemon.category}</Text>
-          </View>
-        </View>
 
-        {/* Types */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Types</Text>
-          <View style={styles.typesContainer}>
-            {displayPokemon.types?.map((type, index) => (
-              <View
-                key={index}
-                style={[styles.typeTag, { backgroundColor: getTypeColor(type.name) }]}
+            <View style={styles.imageContainer}>
+              <BlurView intensity={10} style={styles.imageBlur}>
+                <Image
+                  source={{ 
+                    uri: isShiny ? displayPokemon.sprites.shiny : displayPokemon.sprites.regular 
+                  }}
+                  style={styles.pokemonImage}
+                  resizeMode="contain"
+                />
+              </BlurView>
+              <TouchableOpacity
+                style={styles.shinyButton}
+                onPress={handleShinyToggle}
+                activeOpacity={0.8}
               >
-                <Text style={styles.typeText}>{type.name}</Text>
+                <LinearGradient
+                  colors={isShiny ? ['#FFD700', '#FFA500'] : ['#8B5CF6', '#A855F7']}
+                  style={styles.shinyGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={styles.shinyButtonText}>
+                    {isShiny ? '✨ Shiny' : '⭐ Shiny'}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.basicInfo}>
+              <Text style={styles.pokemonNumber}>
+                #{displayPokemon.pokedex_id.toString().padStart(3, '0')}
+              </Text>
+              <Text style={styles.pokemonName}>{displayPokemon.name.fr}</Text>
+              <Text style={styles.pokemonNameEn}>({displayPokemon.name.en})</Text>
+              <Text style={styles.category}>{displayPokemon.category}</Text>
+            </View>
+          </Animated.View>
+
+          {/* Types */}
+          <Animated.View 
+            style={[
+              styles.section,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            <BlurView intensity={20} style={styles.sectionBlur}>
+              <Text style={styles.sectionTitle}>Types</Text>
+              <View style={styles.typesContainer}>
+                {displayPokemon.types?.map((type, index) => (
+                  <View
+                    key={index}
+                    style={[styles.typeTag, { backgroundColor: getTypeColor(type.name) }]}
+                  >
+                    <Text style={styles.typeText}>{type.name}</Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
-        </View>
+            </BlurView>
+          </Animated.View>
 
-        {/* Statistiques */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Statistiques</Text>
-          <View style={styles.statsContainer}>
-            <StatBar label="PV" value={displayPokemon.stats.hp} maxValue={255} color="#FF5959" />
-            <StatBar label="Attaque" value={displayPokemon.stats.atk} maxValue={255} color="#F5AC78" />
-            <StatBar label="Défense" value={displayPokemon.stats.def} maxValue={255} color="#FAE078" />
-            <StatBar label="Att. Spé" value={displayPokemon.stats.spe_atk} maxValue={255} color="#9DB7F5" />
-            <StatBar label="Déf. Spé" value={displayPokemon.stats.spe_def} maxValue={255} color="#A7DB8D" />
-            <StatBar label="Vitesse" value={displayPokemon.stats.vit} maxValue={255} color="#FA92B2" />
-          </View>
-        </View>
-
-        {/* Informations physiques */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Informations physiques</Text>
-          <View style={styles.physicalInfo}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Taille:</Text>
-              <Text style={styles.infoValue}>{displayPokemon.height}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Poids:</Text>
-              <Text style={styles.infoValue}>{displayPokemon.weight}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Génération:</Text>
-              <Text style={styles.infoValue}>{displayPokemon.generation}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Talents */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Talents</Text>
-          <View style={styles.talentsContainer}>
-            {displayPokemon.talents?.map((talent, index) => (
-              <View key={index} style={styles.talentItem}>
-                <Text style={styles.talentName}>{talent.name}</Text>
-                {talent.tc && <Text style={styles.hiddenTalent}>(Talent Caché)</Text>}
+          {/* Statistiques */}
+          <Animated.View 
+            style={[
+              styles.section,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            <BlurView intensity={20} style={styles.sectionBlur}>
+              <Text style={styles.sectionTitle}>Statistiques</Text>
+              <View style={styles.statsContainer}>
+                <StatBar label="PV" value={displayPokemon.stats.hp} maxValue={255} color="#FF5959" />
+                <StatBar label="Attaque" value={displayPokemon.stats.atk} maxValue={255} color="#F5AC78" />
+                <StatBar label="Défense" value={displayPokemon.stats.def} maxValue={255} color="#FAE078" />
+                <StatBar label="Att. Spé" value={displayPokemon.stats.spe_atk} maxValue={255} color="#9DB7F5" />
+                <StatBar label="Déf. Spé" value={displayPokemon.stats.spe_def} maxValue={255} color="#A7DB8D" />
+                <StatBar label="Vitesse" value={displayPokemon.stats.vit} maxValue={255} color="#FA92B2" />
               </View>
-            ))}
-          </View>
-        </View>
+            </BlurView>
+          </Animated.View>
 
-        {/* Faiblesses et Résistances */}
-        {displayPokemon.resistances && displayPokemon.resistances.length > 0 && (() => {
-          // Trier les résistances par catégories pour une meilleure UX
-          const sortedResistances = [...displayPokemon.resistances].sort((a, b) => {
-            // Ordre : Immunités (0) → Résistances (<1) → Normal (1) → Faiblesses (>1)
-            if (a.multiplier === 0 && b.multiplier !== 0) return -1;
-            if (b.multiplier === 0 && a.multiplier !== 0) return 1;
-            if (a.multiplier < 1 && b.multiplier >= 1) return -1;
-            if (b.multiplier < 1 && a.multiplier >= 1) return 1;
-            if (a.multiplier === 1 && b.multiplier > 1) return -1;
-            if (b.multiplier === 1 && a.multiplier > 1) return 1;
-            // Trier par multiplier dans chaque catégorie
-            return a.multiplier - b.multiplier;
-          });
+          {/* Informations physiques */}
+          <Animated.View 
+            style={[
+              styles.section,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            <BlurView intensity={20} style={styles.sectionBlur}>
+              <Text style={styles.sectionTitle}>Informations physiques</Text>
+              <View style={styles.physicalInfo}>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Taille:</Text>
+                  <Text style={styles.infoValue}>{displayPokemon.height}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Poids:</Text>
+                  <Text style={styles.infoValue}>{displayPokemon.weight}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Génération:</Text>
+                  <Text style={styles.infoValue}>{displayPokemon.generation}</Text>
+                </View>
+              </View>
+            </BlurView>
+          </Animated.View>
 
-          const immunities = sortedResistances.filter(r => r.multiplier === 0);
-          const resistances = sortedResistances.filter(r => r.multiplier > 0 && r.multiplier < 1);
-          const weaknesses = sortedResistances.filter(r => r.multiplier > 1);
+          {/* Talents */}
+          <Animated.View 
+            style={[
+              styles.section,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            <BlurView intensity={20} style={styles.sectionBlur}>
+              <Text style={styles.sectionTitle}>Talents</Text>
+              <View style={styles.talentsContainer}>
+                {displayPokemon.talents?.map((talent, index) => (
+                  <View key={index} style={styles.talentItem}>
+                    <Text style={styles.talentName}>{talent.name}</Text>
+                    {talent.tc && <Text style={styles.hiddenTalent}>(Talent Caché)</Text>}
+                  </View>
+                ))}
+              </View>
+            </BlurView>
+          </Animated.View>
 
-          return (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Faiblesses et Résistances</Text>
+          {/* Faiblesses et Résistances */}
+          {displayPokemon.resistances && displayPokemon.resistances.length > 0 && (() => {
+            // Trier les résistances par catégories pour une meilleure UX
+            const sortedResistances = [...displayPokemon.resistances].sort((a, b) => {
+              // Ordre : Immunités (0) → Résistances (<1) → Normal (1) → Faiblesses (>1)
+              if (a.multiplier === 0 && b.multiplier !== 0) return -1;
+              if (b.multiplier === 0 && a.multiplier !== 0) return 1;
+              if (a.multiplier < 1 && b.multiplier >= 1) return -1;
+              if (b.multiplier < 1 && a.multiplier >= 1) return 1;
+              if (a.multiplier === 1 && b.multiplier > 1) return -1;
+              if (b.multiplier === 1 && a.multiplier > 1) return 1;
+              // Trier par multiplier dans chaque catégorie
+              return a.multiplier - b.multiplier;
+            });
+
+            const immunities = sortedResistances.filter(r => r.multiplier === 0);
+            const resistances = sortedResistances.filter(r => r.multiplier > 0 && r.multiplier < 1);
+            const weaknesses = sortedResistances.filter(r => r.multiplier > 1);
+
+            return (
+              <Animated.View 
+                style={[
+                  styles.section,
+                  {
+                    opacity: fadeAnim,
+                    transform: [{ translateY: slideAnim }],
+                  },
+                ]}
+              >
+                <BlurView intensity={20} style={styles.sectionBlur}>
+                  <Text style={styles.sectionTitle}>Faiblesses et Résistances</Text>
               
               {/* Immunités */}
               {immunities.length > 0 && (
@@ -308,29 +423,31 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
                 </View>
               )}
 
-              {/* Faiblesses */}
-              {weaknesses.length > 0 && (
-                <View style={styles.categoryContainer}>
-                  <Text style={styles.categoryTitle}>⚡ Faiblesses</Text>
-                  <View style={styles.typesGrid}>
-                    {weaknesses.map((resistance, index) => (
-                      <View key={index} style={styles.typeGridItem}>
-                        <View style={[
-                          styles.resistanceTypeTag, 
-                          { backgroundColor: getTypeColor(resistance.name) }
-                        ]}>
-                          <Text style={styles.resistanceTypeName}>{resistance.name}</Text>
-                        </View>
-                        <Text style={styles.multiplierText}>×{resistance.multiplier}</Text>
+                  {/* Faiblesses */}
+                  {weaknesses.length > 0 && (
+                    <View style={styles.categoryContainer}>
+                      <Text style={styles.categoryTitle}>⚡ Faiblesses</Text>
+                      <View style={styles.typesGrid}>
+                        {weaknesses.map((resistance, index) => (
+                          <View key={index} style={styles.typeGridItem}>
+                            <View style={[
+                              styles.resistanceTypeTag, 
+                              { backgroundColor: getTypeColor(resistance.name) }
+                            ]}>
+                              <Text style={styles.resistanceTypeName}>{resistance.name}</Text>
+                            </View>
+                            <Text style={styles.multiplierText}>×{resistance.multiplier}</Text>
+                          </View>
+                        ))}
                       </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-            </View>
-          );
-        })()}
-      </ScrollView>
+                    </View>
+                  )}
+                </BlurView>
+              </Animated.View>
+            );
+          })()}
+        </ScrollView>
+      </LinearGradient>
     </SafeAreaView>
   );
 };
@@ -391,7 +508,9 @@ const getTypeColor = (type: string): string => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+  },
+  gradient: {
+    flex: 1,
   },
   centerContainer: {
     flex: 1,
@@ -402,7 +521,8 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#64748B',
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   errorText: {
     fontSize: 48,
@@ -410,19 +530,17 @@ const styles = StyleSheet.create({
   },
   errorMessage: {
     fontSize: 16,
-    color: '#64748B',
+    color: '#FFFFFF',
     textAlign: 'center',
+    fontWeight: '500',
   },
   scrollView: {
     flex: 1,
   },
   header: {
-    backgroundColor: '#FFFFFF',
     paddingVertical: 24,
     paddingHorizontal: 20,
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
     position: 'relative',
   },
   favoriteButton: {
@@ -430,17 +548,19 @@ const styles = StyleSheet.create({
     top: 20,
     right: 20,
     zIndex: 10,
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     width: 40,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    overflow: 'hidden',
+  },
+  favoriteBlur: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   favoriteIcon: {
     fontSize: 20,
@@ -449,75 +569,104 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  imageBlur: {
+    borderRadius: 75,
+    padding: 8,
+    overflow: 'hidden',
+  },
   pokemonImage: {
     width: 150,
     height: 150,
   },
   shinyButton: {
-    backgroundColor: '#8B5CF6',
+    borderRadius: 16,
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  shinyGradient: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    marginTop: 8,
   },
   shinyButtonText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
+    textAlign: 'center',
   },
   basicInfo: {
     alignItems: 'center',
   },
   pokemonNumber: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: 4,
+    fontWeight: '600',
   },
   pokemonName: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#1E293B',
+    color: '#FFFFFF',
     marginBottom: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 8,
   },
   pokemonNameEn: {
     fontSize: 16,
-    color: '#64748B',
+    color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: 8,
+    fontWeight: '500',
   },
   category: {
     fontSize: 14,
-    color: '#64748B',
+    color: 'rgba(255, 255, 255, 0.7)',
     fontStyle: 'italic',
+    fontWeight: '500',
   },
   section: {
-    backgroundColor: '#FFFFFF',
     marginVertical: 4,
     paddingVertical: 20,
     paddingHorizontal: 20,
   },
+  sectionBlur: {
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    overflow: 'hidden',
+  },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#1E293B',
+    color: '#FFFFFF',
     marginBottom: 16,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 4,
   },
   typesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
   typeTag: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   typeText: {
     fontSize: 14,
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   statsContainer: {
-    gap: 12,
+    gap: 16,
   },
   statRow: {
     flexDirection: 'row',
@@ -526,45 +675,49 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 14,
-    color: '#64748B',
+    color: 'rgba(255, 255, 255, 0.9)',
     width: 70,
+    fontWeight: '600',
   },
   statValue: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#1E293B',
+    fontWeight: '700',
+    color: '#FFFFFF',
     width: 30,
     textAlign: 'right',
   },
   statBarContainer: {
     flex: 1,
-    height: 8,
-    backgroundColor: '#E2E8F0',
-    borderRadius: 4,
+    height: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 5,
+    overflow: 'hidden',
   },
   statBar: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 5,
   },
   physicalInfo: {
-    gap: 12,
+    gap: 16,
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 4,
   },
   infoLabel: {
     fontSize: 16,
-    color: '#64748B',
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '600',
   },
   infoValue: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#1E293B',
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   talentsContainer: {
-    gap: 8,
+    gap: 12,
   },
   talentItem: {
     flexDirection: 'row',
@@ -573,28 +726,32 @@ const styles = StyleSheet.create({
   },
   talentName: {
     fontSize: 16,
-    color: '#1E293B',
-    fontWeight: '500',
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   hiddenTalent: {
     fontSize: 12,
-    color: '#8B5CF6',
+    color: '#FFD700',
     fontStyle: 'italic',
+    fontWeight: '600',
   },
   // Styles pour les résistances (nouvelle version organisée)
   categoryContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   categoryTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
     marginBottom: 12,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 4,
   },
   typesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
   typeGridItem: {
     alignItems: 'center',
@@ -607,16 +764,22 @@ const styles = StyleSheet.create({
     minWidth: 70,
     alignItems: 'center',
     marginBottom: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   resistanceTypeName: {
     fontSize: 12,
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   multiplierText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#6B7280',
+    fontWeight: '700',
+    color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
   },
   // Styles spéciaux pour MissingNo.

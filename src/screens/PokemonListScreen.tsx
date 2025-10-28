@@ -10,11 +10,18 @@ import {
   TextInput,
   SafeAreaView,
   Alert,
+  Animated,
+  Dimensions,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
 import { useQueryClient } from '@tanstack/react-query';
 import { PokemonListScreenProps } from '../types/navigation';
 import { Pokemon } from '../types/pokemon';
 import { useAllPokemon, useFilteredPokemon } from '../hooks/usePokemon';
+
+const { width } = Dimensions.get('window');
 
 const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,38 +33,80 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
     searchTerm: searchQuery,
   });
 
-  const renderPokemonItem = ({ item }: { item: Pokemon }) => (
-    <TouchableOpacity
-      style={styles.pokemonCard}
-      onPress={() => navigation.navigate('PokemonDetail', { 
-        pokemonId: item.pokedex_id,
-        pokemon: item 
-      })}
-    >
-      <View style={styles.pokemonImageContainer}>
-        <Image
-          source={{ uri: item.sprites.regular }}
-          style={styles.pokemonImage}
-          resizeMode="contain"
-        />
-      </View>
-      
-      <View style={styles.pokemonInfo}>
-        <Text style={styles.pokemonNumber}>#{item.pokedex_id.toString().padStart(3, '0')}</Text>
-        <Text style={styles.pokemonName}>{item.name.fr}</Text>
-        <View style={styles.typesContainer}>
-          {item.types?.map((type, index) => (
-            <View
-              key={index}
-              style={[styles.typeTag, { backgroundColor: getTypeColor(type.name) }]}
-            >
-              <Text style={styles.typeText}>{type.name}</Text>
+  const handlePokemonPress = async (pokemon: Pokemon) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    navigation.navigate('PokemonDetail', { 
+      pokemonId: pokemon.pokedex_id,
+      pokemon: pokemon 
+    });
+  };
+
+  const renderPokemonItem = ({ item, index }: { item: Pokemon; index: number }) => {
+    const animatedValue = new Animated.Value(0);
+    
+    React.useEffect(() => {
+      Animated.timing(animatedValue, {
+        toValue: 1,
+        duration: 300,
+        delay: index * 50,
+        useNativeDriver: true,
+      }).start();
+    }, []);
+
+    return (
+      <Animated.View
+        style={{
+          opacity: animatedValue,
+          transform: [
+            {
+              translateY: animatedValue.interpolate({
+                inputRange: [0, 1],
+                outputRange: [50, 0],
+              }),
+            },
+          ],
+        }}
+      >
+        <TouchableOpacity
+          style={styles.pokemonCard}
+          onPress={() => handlePokemonPress(item)}
+          activeOpacity={0.8}
+        >
+          <LinearGradient
+            colors={['#FFFFFF', '#F8FAFC']}
+            style={styles.cardGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.pokemonImageContainer}>
+              <BlurView intensity={5} style={styles.imageBlur}>
+                <Image
+                  source={{ uri: item.sprites.regular }}
+                  style={styles.pokemonImage}
+                  resizeMode="contain"
+                />
+              </BlurView>
             </View>
-          ))}
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
+            
+            <View style={styles.pokemonInfo}>
+              <Text style={styles.pokemonNumber}>#{item.pokedex_id.toString().padStart(3, '0')}</Text>
+              <Text style={styles.pokemonName}>{item.name.fr}</Text>
+              <View style={styles.typesContainer}>
+                {item.types?.map((type, index) => (
+                  <View
+                    key={index}
+                    style={[styles.typeTag, { backgroundColor: getTypeColor(type.name) }]}
+                  >
+                    <Text style={styles.typeText}>{type.name}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -87,34 +136,45 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Barre de recherche */}
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Rechercher un Pokémon..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor="#94A3B8"
+      <LinearGradient
+        colors={['#667eea', '#764ba2']}
+        style={styles.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        {/* Barre de recherche */}
+        <View style={styles.searchContainer}>
+          <BlurView intensity={20} style={styles.searchBlur}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Rechercher un Pokémon..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholderTextColor="rgba(255, 255, 255, 0.7)"
+            />
+          </BlurView>
+        </View>
+
+        {/* Résultats */}
+        <View style={styles.resultsHeader}>
+          <BlurView intensity={10} style={styles.resultsBlur}>
+            <Text style={styles.resultsText}>
+              {filteredPokemon.length} Pokémon trouvé(s)
+            </Text>
+          </BlurView>
+        </View>
+
+        {/* Liste des Pokémon */}
+        <FlatList
+          data={filteredPokemon}
+          renderItem={renderPokemonItem}
+          keyExtractor={(item) => item.pokedex_id.toString()}
+          numColumns={2}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          columnWrapperStyle={styles.row}
         />
-      </View>
-
-      {/* Résultats */}
-      <View style={styles.resultsHeader}>
-        <Text style={styles.resultsText}>
-          {filteredPokemon.length} Pokémon trouvé(s)
-        </Text>
-      </View>
-
-      {/* Liste des Pokémon */}
-      <FlatList
-        data={filteredPokemon}
-        renderItem={renderPokemonItem}
-        keyExtractor={(item) => item.pokedex_id.toString()}
-        numColumns={2}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        columnWrapperStyle={styles.row}
-      />
+      </LinearGradient>
     </SafeAreaView>
   );
 };
@@ -148,7 +208,9 @@ const getTypeColor = (type: string): string => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+  },
+  gradient: {
+    flex: 1,
   },
   centerContainer: {
     flex: 1,
@@ -159,7 +221,8 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#64748B',
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   errorText: {
     fontSize: 48,
@@ -167,43 +230,54 @@ const styles = StyleSheet.create({
   },
   errorMessage: {
     fontSize: 16,
-    color: '#64748B',
+    color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 20,
+    fontWeight: '500',
   },
   retryButton: {
-    backgroundColor: '#DC2626',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingVertical: 12,
     paddingHorizontal: 24,
-    borderRadius: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   retryButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   searchContainer: {
     padding: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+  },
+  searchBlur: {
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   searchInput: {
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 16,
     fontSize: 16,
-    color: '#1E293B',
+    color: '#FFFFFF',
+    fontWeight: '500',
   },
   resultsHeader: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
+  },
+  resultsBlur: {
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    overflow: 'hidden',
   },
   resultsText: {
     fontSize: 14,
-    color: '#64748B',
+    color: '#FFFFFF',
+    fontWeight: '600',
+    textAlign: 'center',
   },
   listContainer: {
     padding: 8,
@@ -212,21 +286,29 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
   },
   pokemonCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 20,
     margin: 8,
     flex: 1,
     maxWidth: '45%',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  cardGradient: {
+    padding: 16,
+    borderRadius: 20,
   },
   pokemonImageContainer: {
     alignItems: 'center',
     marginBottom: 12,
+  },
+  imageBlur: {
+    borderRadius: 40,
+    padding: 8,
+    overflow: 'hidden',
   },
   pokemonImage: {
     width: 80,
@@ -239,10 +321,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#94A3B8',
     marginBottom: 4,
+    fontWeight: '600',
   },
   pokemonName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1E293B',
     marginBottom: 8,
     textAlign: 'center',
@@ -251,17 +334,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 4,
+    gap: 6,
   },
   typeTag: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   typeText: {
     fontSize: 10,
     color: '#FFFFFF',
-    fontWeight: '500',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });
 
