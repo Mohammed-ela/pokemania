@@ -23,6 +23,78 @@ import { useAllPokemon, useFilteredPokemon } from '../hooks/usePokemon';
 
 const { width } = Dimensions.get('window');
 
+// Composant séparé pour les éléments de la liste avec animations
+const PokemonListItem: React.FC<{
+  item: Pokemon;
+  index: number;
+  onPress: (pokemon: Pokemon) => void;
+}> = ({ item, index, onPress }) => {
+  const animatedValue = new Animated.Value(0);
+  
+  React.useEffect(() => {
+    Animated.timing(animatedValue, {
+      toValue: 1,
+      duration: 300,
+      delay: index * 50,
+      useNativeDriver: true,
+    }).start();
+  }, [index]);
+
+  return (
+    <Animated.View
+      style={{
+        opacity: animatedValue,
+        transform: [
+          {
+            translateY: animatedValue.interpolate({
+              inputRange: [0, 1],
+              outputRange: [50, 0],
+            }),
+          },
+        ],
+      }}
+    >
+      <TouchableOpacity
+        style={styles.pokemonCard}
+        onPress={() => onPress(item)}
+        activeOpacity={0.8}
+      >
+        <LinearGradient
+          colors={['#FFFFFF', '#F8FAFC']}
+          style={styles.cardGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.pokemonImageContainer}>
+            <BlurView intensity={5} style={styles.imageBlur}>
+              <Image
+                source={{ uri: item.sprites.regular }}
+                style={styles.pokemonImage}
+                resizeMode="contain"
+              />
+            </BlurView>
+          </View>
+          
+          <View style={styles.pokemonInfo}>
+            <Text style={styles.pokemonNumber}>#{item.pokedex_id.toString().padStart(3, '0')}</Text>
+            <Text style={styles.pokemonName}>{item.name.fr}</Text>
+            <View style={styles.typesContainer}>
+              {item.types?.map((type, typeIndex) => (
+                <View
+                  key={typeIndex}
+                  style={[styles.typeTag, { backgroundColor: getTypeColor(type.name) }]}
+                >
+                  <Text style={styles.typeText}>{type.name}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </LinearGradient>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
 const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const queryClient = useQueryClient();
@@ -42,69 +114,12 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
   };
 
   const renderPokemonItem = ({ item, index }: { item: Pokemon; index: number }) => {
-    const animatedValue = new Animated.Value(0);
-    
-    React.useEffect(() => {
-      Animated.timing(animatedValue, {
-        toValue: 1,
-        duration: 300,
-        delay: index * 50,
-        useNativeDriver: true,
-      }).start();
-    }, []);
-
     return (
-      <Animated.View
-        style={{
-          opacity: animatedValue,
-          transform: [
-            {
-              translateY: animatedValue.interpolate({
-                inputRange: [0, 1],
-                outputRange: [50, 0],
-              }),
-            },
-          ],
-        }}
-      >
-        <TouchableOpacity
-          style={styles.pokemonCard}
-          onPress={() => handlePokemonPress(item)}
-          activeOpacity={0.8}
-        >
-          <LinearGradient
-            colors={['#FFFFFF', '#F8FAFC']}
-            style={styles.cardGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <View style={styles.pokemonImageContainer}>
-              <BlurView intensity={5} style={styles.imageBlur}>
-                <Image
-                  source={{ uri: item.sprites.regular }}
-                  style={styles.pokemonImage}
-                  resizeMode="contain"
-                />
-              </BlurView>
-            </View>
-            
-            <View style={styles.pokemonInfo}>
-              <Text style={styles.pokemonNumber}>#{item.pokedex_id.toString().padStart(3, '0')}</Text>
-              <Text style={styles.pokemonName}>{item.name.fr}</Text>
-              <View style={styles.typesContainer}>
-                {item.types?.map((type, index) => (
-                  <View
-                    key={index}
-                    style={[styles.typeTag, { backgroundColor: getTypeColor(type.name) }]}
-                  >
-                    <Text style={styles.typeText}>{type.name}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
-      </Animated.View>
+      <PokemonListItem
+        item={item}
+        index={index}
+        onPress={handlePokemonPress}
+      />
     );
   };
 
