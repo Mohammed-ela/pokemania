@@ -28,8 +28,8 @@ const PokemonListItem: React.FC<{
   item: Pokemon;
   index: number;
   onPress: (pokemon: Pokemon) => void;
-}> = ({ item, index, onPress }) => {
-  const animatedValue = new Animated.Value(0);
+}> = React.memo(({ item, index, onPress }) => {
+  const animatedValue = React.useRef(new Animated.Value(0)).current;
   
   React.useEffect(() => {
     Animated.timing(animatedValue, {
@@ -38,7 +38,7 @@ const PokemonListItem: React.FC<{
       delay: index * 50,
       useNativeDriver: true,
     }).start();
-  }, [index]);
+  }, [index, animatedValue]);
 
   return (
     <Animated.View
@@ -59,20 +59,13 @@ const PokemonListItem: React.FC<{
         onPress={() => onPress(item)}
         activeOpacity={0.8}
       >
-        <LinearGradient
-          colors={['#FFFFFF', '#F8FAFC']}
-          style={styles.cardGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
+        <View style={styles.cardContainer}>
           <View style={styles.pokemonImageContainer}>
-            <BlurView intensity={5} style={styles.imageBlur}>
-              <Image
-                source={{ uri: item.sprites.regular }}
-                style={styles.pokemonImage}
-                resizeMode="contain"
-              />
-            </BlurView>
+            <Image
+              source={{ uri: item.sprites.regular }}
+              style={styles.pokemonImage}
+              resizeMode="contain"
+            />
           </View>
           
           <View style={styles.pokemonInfo}>
@@ -89,11 +82,11 @@ const PokemonListItem: React.FC<{
               ))}
             </View>
           </View>
-        </LinearGradient>
+        </View>
       </TouchableOpacity>
     </Animated.View>
   );
-};
+});
 
 const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -151,12 +144,7 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        style={styles.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
+      <View style={styles.background}>
         {/* Barre de recherche */}
         <View style={styles.searchContainer}>
           <BlurView intensity={20} style={styles.searchBlur}>
@@ -189,7 +177,7 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
           showsVerticalScrollIndicator={false}
           columnWrapperStyle={styles.row}
         />
-      </LinearGradient>
+      </View>
     </SafeAreaView>
   );
 };
@@ -223,9 +211,11 @@ const getTypeColor = (type: string): string => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  gradient: {
+  background: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
   },
   centerContainer: {
     flex: 1,
@@ -236,7 +226,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: '#64748B',
     fontWeight: '600',
   },
   errorText: {
@@ -245,13 +235,13 @@ const styles = StyleSheet.create({
   },
   errorMessage: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: '#64748B',
     textAlign: 'center',
     marginBottom: 20,
     fontWeight: '500',
   },
   retryButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#DC2626',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 12,
@@ -268,14 +258,17 @@ const styles = StyleSheet.create({
   searchBlur: {
     borderRadius: 16,
     overflow: 'hidden',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   searchInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'transparent',
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderRadius: 16,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: '#1E293B',
     fontWeight: '500',
   },
   resultsHeader: {
@@ -287,10 +280,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     overflow: 'hidden',
+    backgroundColor: '#F8FAFC',
   },
   resultsText: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: '#64748B',
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -301,29 +295,29 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
   },
   pokemonCard: {
-    borderRadius: 20,
+    borderRadius: 16,
     margin: 8,
     flex: 1,
     maxWidth: '45%',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
     overflow: 'hidden',
   },
-  cardGradient: {
+  cardContainer: {
+    backgroundColor: '#FFFFFF',
     padding: 16,
-    borderRadius: 20,
+    borderRadius: 16,
+    alignItems: 'center',
   },
   pokemonImageContainer: {
     alignItems: 'center',
     marginBottom: 12,
-  },
-  imageBlur: {
-    borderRadius: 40,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
     padding: 8,
-    overflow: 'hidden',
   },
   pokemonImage: {
     width: 80,

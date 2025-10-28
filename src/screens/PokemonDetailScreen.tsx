@@ -180,12 +180,7 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#667eea', '#764ba2', '#f093fb']}
-        style={styles.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
+      <View style={styles.background}>
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           {/* En-tête avec image */}
           <Animated.View 
@@ -447,7 +442,7 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
             );
           })()}
         </ScrollView>
-      </LinearGradient>
+      </View>
     </SafeAreaView>
   );
 };
@@ -508,9 +503,11 @@ const getTypeColor = (type: string): string => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  gradient: {
+  background: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
   },
   centerContainer: {
     flex: 1,
@@ -521,7 +518,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: '#64748B',
     fontWeight: '600',
   },
   errorText: {
@@ -530,7 +527,7 @@ const styles = StyleSheet.create({
   },
   errorMessage: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: '#64748B',
     textAlign: 'center',
     fontWeight: '500',
   },
@@ -542,6 +539,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: 'center',
     position: 'relative',
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
   },
   favoriteButton: {
     position: 'absolute',
@@ -599,28 +599,25 @@ const styles = StyleSheet.create({
   },
   pokemonNumber: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: '#94A3B8',
     marginBottom: 4,
     fontWeight: '600',
   },
   pokemonName: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#1E293B',
     marginBottom: 4,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 8,
   },
   pokemonNameEn: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: '#64748B',
     marginBottom: 8,
     fontWeight: '500',
   },
   category: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#64748B',
     fontStyle: 'italic',
     fontWeight: '500',
   },
@@ -633,16 +630,20 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 20,
     paddingHorizontal: 20,
-    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: '#1E293B',
     marginBottom: 16,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 4,
   },
   typesContainer: {
     flexDirection: 'row',
@@ -675,21 +676,21 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: '#64748B',
     width: 70,
     fontWeight: '600',
   },
   statValue: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#1E293B',
     width: 30,
     textAlign: 'right',
   },
   statBarContainer: {
     flex: 1,
     height: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#E2E8F0',
     borderRadius: 5,
     overflow: 'hidden',
   },
@@ -708,13 +709,13 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: '#64748B',
     fontWeight: '600',
   },
   infoValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#1E293B',
   },
   talentsContainer: {
     gap: 12,
@@ -726,12 +727,12 @@ const styles = StyleSheet.create({
   },
   talentName: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: '#1E293B',
     fontWeight: '600',
   },
   hiddenTalent: {
     fontSize: 12,
-    color: '#FFD700',
+    color: '#8B5CF6',
     fontStyle: 'italic',
     fontWeight: '600',
   },
@@ -742,11 +743,8 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#1E293B',
     marginBottom: 12,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 4,
   },
   typesGrid: {
     flexDirection: 'row',
@@ -779,7 +777,7 @@ const styles = StyleSheet.create({
   multiplierText: {
     fontSize: 12,
     fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: '#64748B',
     textAlign: 'center',
   },
   // Styles spéciaux pour MissingNo.
