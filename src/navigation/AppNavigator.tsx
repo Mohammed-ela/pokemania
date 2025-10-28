@@ -24,8 +24,10 @@ const AppNavigator: React.FC = () => {
           },
           headerTintColor: '#fff',
           headerTitleStyle: {
-            fontWeight: 'bold',
+            fontWeight: '800',
+            fontSize: 18,
           },
+          headerShadowVisible: true,
           animation: 'slide_from_right',
         }}
       >
