@@ -1,7 +1,6 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { StatusBar } from 'expo-status-bar';
 import { RootStackParamList } from '../types/navigation';
 
 // Import des écrans
@@ -17,21 +16,17 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const AppNavigator: React.FC = () => {
   return (
     <NavigationContainer>
-      <StatusBar style="light" />
       <Stack.Navigator
         initialRouteName="Home"
         screenOptions={{
           headerStyle: {
-            backgroundColor: 'transparent',
+            backgroundColor: '#DC2626', // Rouge Pokémon
           },
           headerTintColor: '#fff',
           headerTitleStyle: {
             fontWeight: 'bold',
-            fontSize: 18,
           },
-          headerTransparent: true,
           animation: 'slide_from_right',
-          headerBlurEffect: 'regular',
         }}
       >
         <Stack.Screen
@@ -39,7 +34,9 @@ const AppNavigator: React.FC = () => {
           component={HomeScreen}
           options={{
             title: 'Pokemania',
-            headerShown: false,
+            headerStyle: {
+              backgroundColor: '#DC2626',
+            },
           }}
         />
         
@@ -48,7 +45,6 @@ const AppNavigator: React.FC = () => {
           component={PokemonListScreen}
           options={{
             title: 'Liste des Pokémon',
-            headerShown: false,
           }}
         />
         
@@ -57,7 +53,6 @@ const AppNavigator: React.FC = () => {
           component={PokemonDetailScreen}
           options={({ route }) => ({
             title: route.params?.pokemon?.name.fr || 'Détails du Pokémon',
-            headerShown: false,
           })}
         />
         
@@ -66,7 +61,6 @@ const AppNavigator: React.FC = () => {
           component={FavoritesScreen}
           options={{
             title: 'Mes Favoris',
-            headerShown: false,
           }}
         />
         
@@ -75,7 +69,6 @@ const AppNavigator: React.FC = () => {
           component={SearchScreen}
           options={{
             title: 'Recherche Avancée',
-            headerShown: false,
           }}
         />
         
@@ -84,7 +77,6 @@ const AppNavigator: React.FC = () => {
           component={SearchResultsScreen}
           options={{
             title: 'Résultats de recherche',
-            headerShown: false,
           }}
         />
       </Stack.Navigator>
