@@ -1,47 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  Image,
   ActivityIndicator,
   TouchableOpacity,
   Dimensions,
   SafeAreaView,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { PokemonDetailScreenProps } from '../types/navigation';
 import { usePokemonById } from '../hooks/usePokemon';
 import { useFavorites } from '../hooks/useFavorites';
+import { getTypeColor } from '../utils/typeColors';
 
 const { width } = Dimensions.get('window');
+const blurhash = 'L6PZfSi_.AyE_3t7t7R**0o#DgR4';
+
+// Composant StatBar memoizé
+const StatBar = memo<{
+  label: string;
+  value: number;
+  maxValue: number;
+  color: string;
+}>(({ label, value, maxValue, color }) => {
+  const percentage = (value / maxValue) * 100;
+
+  return (
+    <View style={styles.statRow} accessibilityLabel={`${label}: ${value}`}>
+      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={styles.statValue}>{value}</Text>
+      <View style={styles.statBarContainer}>
+        <View
+          style={[
+            styles.statBar,
+            { width: `${percentage}%`, backgroundColor: color },
+          ]}
+        />
+      </View>
+    </View>
+  );
+});
 
 const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
   const { pokemonId, pokemon: initialPokemon } = route.params;
   const [isShiny, setIsShiny] = useState(false);
-  
+
   const { data: pokemon, isLoading, error } = usePokemonById(pokemonId);
   const { favorites, toggleFavorite: toggleFav } = useFavorites();
-  
+
   // Calculer si c'est un favori à partir de la liste complète
-  const isFavorite = favorites.some(fav => fav.pokedex_id === pokemonId);
-  const favoriteLoading = false;
-  
+  const isFavorite = favorites.some((fav) => fav.pokedex_id === pokemonId);
+
   // Utilise les données de la route si disponibles, sinon utilise les données de l'API
   const displayPokemon = pokemon || initialPokemon;
 
-  const handleFavoritePress = async () => {
+  const handleFavoritePress = useCallback(async () => {
     if (!displayPokemon) return;
-    
     try {
-      console.log('⭐ Toggle favorite for:', displayPokemon.name.fr);
       await toggleFav(displayPokemon);
-      // Pas de pop-up, juste le changement visuel de l'étoile
-    } catch (error) {
-      // Optionnel : un simple log en cas d'erreur
-      console.error('Erreur lors de la modification des favoris:', error);
+    } catch (err) {
+      console.error('Erreur lors de la modification des favoris:', err);
     }
-  };
+  }, [displayPokemon, toggleFav]);
+
+  const toggleShiny = useCallback(() => {
+    setIsShiny((prev) => !prev);
+  }, []);
 
   if (isLoading && !initialPokemon) {
     return (
@@ -83,7 +109,7 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
               <Text style={styles.missingNoEmoji}>👾</Text>
               <Text style={styles.missingNoTitle}>MissingNo.</Text>
             </View>
-            
+
             <View style={styles.basicInfo}>
               <Text style={styles.pokemonNumber}>#000</Text>
               <Text style={styles.pokemonName}>MissingNo.</Text>
@@ -97,23 +123,31 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
             <Text style={styles.sectionTitle}>🎮 Anecdote Légendaire</Text>
             <View style={styles.anecdoteContainer}>
               <Text style={styles.anecdoteText}>
-                <Text style={styles.anecdoteBold}>MissingNo.</Text> est l'un des bugs les plus célèbres de l'histoire du jeu vidéo ! 
-                Découvert dans Pokémon Rouge et Bleu, ce "Pokémon fantôme" apparaissait lors du fameux glitch de Cramois'Île.
+                <Text style={styles.anecdoteBold}>MissingNo.</Text> est l'un des
+                bugs les plus célèbres de l'histoire du jeu vidéo ! Découvert
+                dans Pokémon Rouge et Bleu, ce "Pokémon fantôme" apparaissait
+                lors du fameux glitch de Cramois'Île.
               </Text>
-              
+
               <Text style={styles.anecdoteText}>
-                💡 <Text style={styles.anecdoteBold}>Le glitch :</Text> Parler au vieil homme de Viridian qui enseigne à capturer un Pokémon, 
-                puis voler immédiatement vers Cramois'Île et surfer sur la côte Est.
+                💡 <Text style={styles.anecdoteBold}>Le glitch :</Text> Parler
+                au vieil homme de Viridian qui enseigne à capturer un Pokémon,
+                puis voler immédiatement vers Cramois'Île et surfer sur la côte
+                Est.
               </Text>
-              
+
               <Text style={styles.anecdoteText}>
-                ✨ <Text style={styles.anecdoteBold}>Effet magique :</Text> Capturer MissingNo. dupliquait le 6ème objet de votre sac ! 
-                Les dresseurs l'utilisaient pour obtenir 99 Master Balls ou 99 Bonbons Rares.
+                ✨ <Text style={styles.anecdoteBold}>Effet magique :</Text>{' '}
+                Capturer MissingNo. dupliquait le 6ème objet de votre sac ! Les
+                dresseurs l'utilisaient pour obtenir 99 Master Balls ou 99
+                Bonbons Rares.
               </Text>
-              
+
               <Text style={styles.anecdoteText}>
-                🏆 <Text style={styles.anecdoteBold}>Impact :</Text> Ce bug est devenu si iconique qu'il fait maintenant partie de la culture Pokémon. 
-                Il représente l'âge d'or des secrets cachés dans les jeux vidéo !
+                🏆 <Text style={styles.anecdoteBold}>Impact :</Text> Ce bug est
+                devenu si iconique qu'il fait maintenant partie de la culture
+                Pokémon. Il représente l'âge d'or des secrets cachés dans les
+                jeux vidéo !
               </Text>
             </View>
           </View>
@@ -133,8 +167,9 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
           <View style={styles.warningSection}>
             <Text style={styles.warningTitle}>⚠️ Note Historique</Text>
             <Text style={styles.warningText}>
-              Dans les jeux originaux, MissingNo. pouvait parfois corrompre les données de sauvegarde. 
-              Heureusement, dans Pokemania, vous pouvez l'admirer en toute sécurité ! 😄
+              Dans les jeux originaux, MissingNo. pouvait parfois corrompre les
+              données de sauvegarde. Heureusement, dans Pokemania, vous pouvez
+              l'admirer en toute sécurité !
             </Text>
           </View>
         </ScrollView>
@@ -151,31 +186,37 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
           <TouchableOpacity
             style={styles.favoriteButton}
             onPress={handleFavoritePress}
-            disabled={favoriteLoading}
+            accessibilityLabel={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            accessibilityRole="button"
           >
-            <Text style={styles.favoriteIcon}>
-              {isFavorite ? '⭐' : '☆'}
-            </Text>
+            <Text style={styles.favoriteIcon}>{isFavorite ? '⭐' : '☆'}</Text>
           </TouchableOpacity>
 
           <View style={styles.imageContainer}>
             <Image
-              source={{ 
-                uri: isShiny ? displayPokemon.sprites.shiny : displayPokemon.sprites.regular 
+              source={{
+                uri: isShiny
+                  ? displayPokemon.sprites.shiny
+                  : displayPokemon.sprites.regular,
               }}
               style={styles.pokemonImage}
-              resizeMode="contain"
+              contentFit="contain"
+              placeholder={{ blurhash }}
+              transition={300}
+              cachePolicy="memory-disk"
             />
             <TouchableOpacity
               style={styles.shinyButton}
-              onPress={() => setIsShiny(!isShiny)}
+              onPress={toggleShiny}
+              accessibilityLabel={isShiny ? 'Voir version normale' : 'Voir version shiny'}
+              accessibilityRole="button"
             >
               <Text style={styles.shinyButtonText}>
                 {isShiny ? '✨ Shiny' : '⭐ Shiny'}
               </Text>
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.basicInfo}>
             <Text style={styles.pokemonNumber}>
               #{displayPokemon.pokedex_id.toString().padStart(3, '0')}
@@ -247,146 +288,104 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route }) => {
         </View>
 
         {/* Faiblesses et Résistances */}
-        {displayPokemon.resistances && displayPokemon.resistances.length > 0 && (() => {
-          // Trier les résistances par catégories pour une meilleure UX
-          const sortedResistances = [...displayPokemon.resistances].sort((a, b) => {
-            // Ordre : Immunités (0) → Résistances (<1) → Normal (1) → Faiblesses (>1)
-            if (a.multiplier === 0 && b.multiplier !== 0) return -1;
-            if (b.multiplier === 0 && a.multiplier !== 0) return 1;
-            if (a.multiplier < 1 && b.multiplier >= 1) return -1;
-            if (b.multiplier < 1 && a.multiplier >= 1) return 1;
-            if (a.multiplier === 1 && b.multiplier > 1) return -1;
-            if (b.multiplier === 1 && a.multiplier > 1) return 1;
-            // Trier par multiplier dans chaque catégorie
-            return a.multiplier - b.multiplier;
-          });
-
-          const immunities = sortedResistances.filter(r => r.multiplier === 0);
-          const resistances = sortedResistances.filter(r => r.multiplier > 0 && r.multiplier < 1);
-          const weaknesses = sortedResistances.filter(r => r.multiplier > 1);
-
-          return (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Faiblesses et Résistances</Text>
-              
-              {/* Immunités */}
-              {immunities.length > 0 && (
-                <View style={styles.categoryContainer}>
-                  <Text style={styles.categoryTitle}>🛡️ Immunités</Text>
-                  <View style={styles.typesGrid}>
-                    {immunities.map((resistance, index) => (
-                      <View key={index} style={styles.typeGridItem}>
-                        <View style={[
-                          styles.resistanceTypeTag, 
-                          { backgroundColor: getTypeColor(resistance.name) }
-                        ]}>
-                          <Text style={styles.resistanceTypeName}>{resistance.name}</Text>
-                        </View>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-
-              {/* Résistances */}
-              {resistances.length > 0 && (
-                <View style={styles.categoryContainer}>
-                  <Text style={styles.categoryTitle}>🔰 Résistances</Text>
-                  <View style={styles.typesGrid}>
-                    {resistances.map((resistance, index) => (
-                      <View key={index} style={styles.typeGridItem}>
-                        <View style={[
-                          styles.resistanceTypeTag, 
-                          { backgroundColor: getTypeColor(resistance.name) }
-                        ]}>
-                          <Text style={styles.resistanceTypeName}>{resistance.name}</Text>
-                        </View>
-                        <Text style={styles.multiplierText}>×{resistance.multiplier}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-
-              {/* Faiblesses */}
-              {weaknesses.length > 0 && (
-                <View style={styles.categoryContainer}>
-                  <Text style={styles.categoryTitle}>⚡ Faiblesses</Text>
-                  <View style={styles.typesGrid}>
-                    {weaknesses.map((resistance, index) => (
-                      <View key={index} style={styles.typeGridItem}>
-                        <View style={[
-                          styles.resistanceTypeTag, 
-                          { backgroundColor: getTypeColor(resistance.name) }
-                        ]}>
-                          <Text style={styles.resistanceTypeName}>{resistance.name}</Text>
-                        </View>
-                        <Text style={styles.multiplierText}>×{resistance.multiplier}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-            </View>
-          );
-        })()}
+        {displayPokemon.resistances && displayPokemon.resistances.length > 0 && (
+          <ResistancesSection resistances={displayPokemon.resistances} />
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-// Composant pour les barres de statistiques
-const StatBar: React.FC<{
-  label: string;
-  value: number;
-  maxValue: number;
-  color: string;
-}> = ({ label, value, maxValue, color }) => {
-  const percentage = (value / maxValue) * 100;
-  
+// Composant memoizé pour les résistances
+const ResistancesSection = memo<{
+  resistances: Array<{ name: string; multiplier: number }>;
+}>(({ resistances }) => {
+  // Trier les résistances par catégories pour une meilleure UX
+  const sortedResistances = [...resistances].sort((a, b) => {
+    if (a.multiplier === 0 && b.multiplier !== 0) return -1;
+    if (b.multiplier === 0 && a.multiplier !== 0) return 1;
+    if (a.multiplier < 1 && b.multiplier >= 1) return -1;
+    if (b.multiplier < 1 && a.multiplier >= 1) return 1;
+    if (a.multiplier === 1 && b.multiplier > 1) return -1;
+    if (b.multiplier === 1 && a.multiplier > 1) return 1;
+    return a.multiplier - b.multiplier;
+  });
+
+  const immunities = sortedResistances.filter((r) => r.multiplier === 0);
+  const resistancesList = sortedResistances.filter((r) => r.multiplier > 0 && r.multiplier < 1);
+  const weaknesses = sortedResistances.filter((r) => r.multiplier > 1);
+
   return (
-    <View style={styles.statRow}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-      <View style={styles.statBarContainer}>
-        <View
-          style={[
-            styles.statBar,
-            { width: `${percentage}%`, backgroundColor: color }
-          ]}
-        />
-      </View>
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Faiblesses et Résistances</Text>
+
+      {/* Immunités */}
+      {immunities.length > 0 && (
+        <View style={styles.categoryContainer}>
+          <Text style={styles.categoryTitle}>🛡️ Immunités</Text>
+          <View style={styles.typesGrid}>
+            {immunities.map((resistance, index) => (
+              <View key={index} style={styles.typeGridItem}>
+                <View
+                  style={[
+                    styles.resistanceTypeTag,
+                    { backgroundColor: getTypeColor(resistance.name) },
+                  ]}
+                >
+                  <Text style={styles.resistanceTypeName}>{resistance.name}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* Résistances */}
+      {resistancesList.length > 0 && (
+        <View style={styles.categoryContainer}>
+          <Text style={styles.categoryTitle}>🔰 Résistances</Text>
+          <View style={styles.typesGrid}>
+            {resistancesList.map((resistance, index) => (
+              <View key={index} style={styles.typeGridItem}>
+                <View
+                  style={[
+                    styles.resistanceTypeTag,
+                    { backgroundColor: getTypeColor(resistance.name) },
+                  ]}
+                >
+                  <Text style={styles.resistanceTypeName}>{resistance.name}</Text>
+                </View>
+                <Text style={styles.multiplierText}>×{resistance.multiplier}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* Faiblesses */}
+      {weaknesses.length > 0 && (
+        <View style={styles.categoryContainer}>
+          <Text style={styles.categoryTitle}>⚡ Faiblesses</Text>
+          <View style={styles.typesGrid}>
+            {weaknesses.map((resistance, index) => (
+              <View key={index} style={styles.typeGridItem}>
+                <View
+                  style={[
+                    styles.resistanceTypeTag,
+                    { backgroundColor: getTypeColor(resistance.name) },
+                  ]}
+                >
+                  <Text style={styles.resistanceTypeName}>{resistance.name}</Text>
+                </View>
+                <Text style={styles.multiplierText}>×{resistance.multiplier}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
     </View>
   );
-};
-
-// Fonction utilitaire pour les couleurs des types
-const getTypeColor = (type: string): string => {
-  const typeColors: { [key: string]: string } = {
-    Normal: '#A8A878',
-    Feu: '#F08030',
-    Eau: '#6890F0',
-    Électrik: '#F8D030',
-    Plante: '#78C850',
-    Glace: '#98D8D8',
-    Combat: '#C03028',
-    Poison: '#A040A0',
-    Sol: '#E0C068',
-    Vol: '#A890F0',
-    Psy: '#F85888',
-    Insecte: '#A8B820',
-    Roche: '#B8A038',
-    Spectre: '#705898',
-    Dragon: '#7038F8',
-    Ténèbres: '#705848',
-    Acier: '#B8B8D0',
-    Fée: '#EE99AC',
-  };
-  
-  return typeColors[type] || '#68A090';
-};
-
-
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -617,7 +616,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     fontWeight: '700',
   },
-  // Styles pour les résistances (nouvelle version organisée)
   categoryContainer: {
     marginBottom: 18,
   },
@@ -662,7 +660,6 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
   },
-  // Styles spéciaux pour MissingNo.
   missingNoEmoji: {
     fontSize: 90,
     marginBottom: 20,

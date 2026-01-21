@@ -1,24 +1,24 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
   TextInput,
   SafeAreaView,
-  Alert,
 } from 'react-native';
-import { useQueryClient } from '@tanstack/react-query';
 import { PokemonListScreenProps } from '../types/navigation';
 import { Pokemon } from '../types/pokemon';
 import { useAllPokemon, useFilteredPokemon } from '../hooks/usePokemon';
+import PokemonCard from '../components/PokemonCard';
+
+// Hauteur estimée d'une carte pour optimiser le scroll
+const ITEM_HEIGHT = 180;
 
 const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const queryClient = useQueryClient();
   const { data: allPokemon, isLoading, error, refetch } = useAllPokemon();
 
   // Filtrage des Pokémon basé sur la recherche
@@ -26,37 +26,39 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
     searchTerm: searchQuery,
   });
 
-  const renderPokemonItem = ({ item }: { item: Pokemon }) => (
-    <TouchableOpacity
-      style={styles.pokemonCard}
-      onPress={() => navigation.navigate('PokemonDetail', { 
-        pokemonId: item.pokedex_id,
-        pokemon: item 
-      })}
-    >
-      <View style={styles.pokemonImageContainer}>
-        <Image
-          source={{ uri: item.sprites.regular }}
-          style={styles.pokemonImage}
-          resizeMode="contain"
-        />
-      </View>
-      
-      <View style={styles.pokemonInfo}>
-        <Text style={styles.pokemonNumber}>#{item.pokedex_id.toString().padStart(3, '0')}</Text>
-        <Text style={styles.pokemonName}>{item.name.fr}</Text>
-        <View style={styles.typesContainer}>
-          {item.types?.map((type, index) => (
-            <View
-              key={index}
-              style={[styles.typeTag, { backgroundColor: getTypeColor(type.name) }]}
-            >
-              <Text style={styles.typeText}>{type.name}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-    </TouchableOpacity>
+  // Callback memoizé pour la navigation
+  const handlePokemonPress = useCallback(
+    (pokemon: Pokemon) => {
+      navigation.navigate('PokemonDetail', {
+        pokemonId: pokemon.pokedex_id,
+        pokemon: pokemon,
+      });
+    },
+    [navigation]
+  );
+
+  // Render item avec le composant memoizé
+  const renderPokemonItem = useCallback(
+    ({ item }: { item: Pokemon }) => (
+      <PokemonCard pokemon={item} onPress={handlePokemonPress} />
+    ),
+    [handlePokemonPress]
+  );
+
+  // Optimisation FlatList : extraction de clé
+  const keyExtractor = useCallback(
+    (item: Pokemon) => item.pokedex_id.toString(),
+    []
+  );
+
+  // Optimisation FlatList : calcul de layout (évite les mesures)
+  const getItemLayout = useCallback(
+    (_: unknown, index: number) => ({
+      length: ITEM_HEIGHT,
+      offset: ITEM_HEIGHT * Math.floor(index / 2),
+      index,
+    }),
+    []
   );
 
   if (isLoading) {
@@ -78,6 +80,8 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
         <TouchableOpacity
           style={styles.retryButton}
           onPress={() => refetch()}
+          accessibilityLabel="Réessayer le chargement"
+          accessibilityRole="button"
         >
           <Text style={styles.retryButtonText}>Réessayer</Text>
         </TouchableOpacity>
@@ -95,6 +99,9 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholderTextColor="#94A3B8"
+          accessibilityLabel="Rechercher un Pokémon"
+          returnKeyType="search"
+          autoCorrect={false}
         />
       </View>
 
@@ -105,44 +112,24 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
         </Text>
       </View>
 
-      {/* Liste des Pokémon */}
+      {/* Liste des Pokémon optimisée */}
       <FlatList
         data={filteredPokemon}
         renderItem={renderPokemonItem}
-        keyExtractor={(item) => item.pokedex_id.toString()}
+        keyExtractor={keyExtractor}
         numColumns={2}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
         columnWrapperStyle={styles.row}
+        // Optimisations de performance
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        initialNumToRender={10}
+        getItemLayout={getItemLayout}
       />
     </SafeAreaView>
   );
-};
-
-// Fonction utilitaire pour les couleurs des types
-const getTypeColor = (type: string): string => {
-  const typeColors: { [key: string]: string } = {
-    Normal: '#A8A878',
-    Feu: '#F08030',
-    Eau: '#6890F0',
-    Électrik: '#F8D030',
-    Plante: '#78C850',
-    Glace: '#98D8D8',
-    Combat: '#C03028',
-    Poison: '#A040A0',
-    Sol: '#E0C068',
-    Vol: '#A890F0',
-    Psy: '#F85888',
-    Insecte: '#A8B820',
-    Roche: '#B8A038',
-    Spectre: '#705898',
-    Dragon: '#7038F8',
-    Ténèbres: '#705848',
-    Acier: '#B8B8D0',
-    Fée: '#EE99AC',
-  };
-  
-  return typeColors[type] || '#68A090';
 };
 
 const styles = StyleSheet.create({
@@ -222,72 +209,6 @@ const styles = StyleSheet.create({
   },
   row: {
     justifyContent: 'space-around',
-  },
-  pokemonCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    margin: 8,
-    flex: 1,
-    maxWidth: '45%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  pokemonImageContainer: {
-    alignItems: 'center',
-    marginBottom: 12,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 8,
-  },
-  pokemonImage: {
-    width: 80,
-    height: 80,
-  },
-  pokemonInfo: {
-    alignItems: 'center',
-  },
-  pokemonNumber: {
-    fontSize: 11,
-    color: '#94A3B8',
-    marginBottom: 4,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  pokemonName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1E293B',
-    marginBottom: 8,
-    textAlign: 'center',
-    letterSpacing: 0.2,
-  },
-  typesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  typeTag: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  typeText: {
-    fontSize: 10,
-    color: '#FFFFFF',
-    fontWeight: '700',
-    letterSpacing: 0.3,
   },
 });
 

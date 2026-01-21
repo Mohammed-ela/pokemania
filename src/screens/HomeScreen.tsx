@@ -12,6 +12,47 @@ import { HomeScreenProps } from '../types/navigation';
 
 const { width } = Dimensions.get('window');
 
+// Composant Pokéball stylée
+const PokeballLogo: React.FC = () => {
+  return (
+    <View style={styles.pokeballWrapper}>
+      {/* Cercle décoratif en arrière-plan */}
+      <View style={styles.pokeballHalo} />
+      
+      {/* Éléments décoratifs flottants */}
+      <View style={[styles.sparkle, styles.sparkle1]}>
+        <Text style={styles.sparkleText}>✨</Text>
+      </View>
+      <View style={[styles.sparkle, styles.sparkle2]}>
+        <Text style={styles.sparkleText}>⭐</Text>
+      </View>
+      <View style={[styles.sparkle, styles.sparkle3]}>
+        <Text style={styles.sparkleText}>✨</Text>
+      </View>
+      
+      {/* Pokéball principale */}
+      <View style={styles.pokeballContainer}>
+        {/* Partie supérieure rouge */}
+        <View style={styles.pokeballTop} />
+        
+        {/* Bande centrale noire */}
+        <View style={styles.pokeballMiddle}>
+          {/* Cercle central blanc */}
+          <View style={styles.pokeballCenter}>
+            {/* Cercle intérieur noir */}
+            <View style={styles.pokeballInner} />
+            {/* Reflet brillant */}
+            <View style={styles.pokeballShine} />
+          </View>
+        </View>
+        
+        {/* Partie inférieure blanche */}
+        <View style={styles.pokeballBottom} />
+      </View>
+    </View>
+  );
+};
+
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
@@ -23,9 +64,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           <Text style={styles.description}>Explorez le monde des Pokémon</Text>
         </View>
 
-        {/* Image principale */}
+        {/* Pokéball stylée */}
         <View style={styles.imageContainer}>
-          <Text style={styles.pokeball}>⚪</Text>
+          <PokeballLogo />
         </View>
 
         {/* Boutons de navigation */}
@@ -109,9 +150,106 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flex: 1,
   },
-  pokeball: {
-    fontSize: 140,
-    opacity: 0.15,
+  // Styles pour la Pokéball
+  pokeballWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  pokeballHalo: {
+    position: 'absolute',
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: 'rgba(220, 38, 38, 0.08)',
+    borderWidth: 2,
+    borderColor: 'rgba(220, 38, 38, 0.15)',
+  },
+  pokeballContainer: {
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    overflow: 'hidden',
+    borderWidth: 6,
+    borderColor: '#1E293B',
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  pokeballTop: {
+    height: '50%',
+    backgroundColor: '#DC2626',
+    borderBottomWidth: 0,
+  },
+  pokeballBottom: {
+    height: '50%',
+    backgroundColor: '#FFFFFF',
+  },
+  pokeballMiddle: {
+    position: 'absolute',
+    top: '50%',
+    left: 0,
+    right: 0,
+    height: 20,
+    backgroundColor: '#1E293B',
+    marginTop: -10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  pokeballCenter: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 6,
+    borderColor: '#1E293B',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  pokeballInner: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 4,
+    borderColor: '#1E293B',
+  },
+  pokeballShine: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  // Éléments décoratifs flottants
+  sparkle: {
+    position: 'absolute',
+  },
+  sparkle1: {
+    top: -20,
+    right: 30,
+  },
+  sparkle2: {
+    top: 50,
+    left: -10,
+  },
+  sparkle3: {
+    bottom: 20,
+    right: -5,
+  },
+  sparkleText: {
+    fontSize: 24,
+    opacity: 0.6,
   },
   buttonsContainer: {
     gap: 14,

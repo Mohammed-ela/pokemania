@@ -9,11 +9,6 @@ export const useFavorites = () => {
   const [favorites, setFavorites] = useState<Pokemon[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Charger les favoris au montage du composant
-  useEffect(() => {
-    loadFavorites();
-  }, [loadFavorites]);
-
   const loadFavorites = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -25,6 +20,11 @@ export const useFavorites = () => {
       setIsLoading(false);
     }
   }, []);
+
+  // Charger les favoris au montage du composant
+  useEffect(() => {
+    loadFavorites();
+  }, [loadFavorites]);
 
   const addToFavorites = useCallback(async (pokemon: Pokemon) => {
     try {
