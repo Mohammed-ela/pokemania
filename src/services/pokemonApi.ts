@@ -14,27 +14,15 @@ const apiClient = axios.create({
   },
 });
 
-// Intercepteur pour ajouter des logs et gérer les erreurs
+// Intercepteur pour gérer les erreurs
 apiClient.interceptors.request.use(
-  (config) => {
-    console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`);
-    return config;
-  },
-  (error) => {
-    console.error('❌ API Request Error:', error);
-    return Promise.reject(error);
-  }
+  (config) => config,
+  (error) => Promise.reject(error)
 );
 
 apiClient.interceptors.response.use(
-  (response) => {
-    console.log(`✅ API Response: ${response.status} ${response.config.url}`);
-    return response;
-  },
-  (error) => {
-    console.error('❌ API Response Error:', error.response?.status, error.response?.data);
-    return Promise.reject(error);
-  }
+  (response) => response,
+  (error) => Promise.reject(error)
 );
 
 export class PokemonAPI {
@@ -46,7 +34,6 @@ export class PokemonAPI {
       const response = await apiClient.get<Pokemon[]>('/pokemon');
       return response.data;
     } catch (error) {
-      console.error('Erreur lors du chargement de la liste des Pokémon:', error);
       throw new Error('Impossible de charger la liste des Pokémon');
     }
   }
@@ -62,7 +49,6 @@ export class PokemonAPI {
       const response = await apiClient.get<Pokemon>(url);
       return response.data;
     } catch (error) {
-      console.error(`Erreur lors du chargement du Pokémon ${id}:`, error);
       throw new Error(`Impossible de charger les détails du Pokémon ${id}`);
     }
   }

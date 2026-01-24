@@ -15,7 +15,7 @@ export const useFavorites = () => {
       const favs = await FavoritesService.getFavorites();
       setFavorites(favs);
     } catch (error) {
-      console.error('Erreur lors du chargement des favoris:', error);
+      // Silently fail - favorites will be empty
     } finally {
       setIsLoading(false);
     }
@@ -37,7 +37,6 @@ export const useFavorites = () => {
         return prev;
       });
     } catch (error) {
-      console.error('Erreur lors de l\'ajout aux favoris:', error);
       throw error;
     }
   }, []);
@@ -47,7 +46,6 @@ export const useFavorites = () => {
       await FavoritesService.removeFromFavorites(pokemonId);
       setFavorites(prev => prev.filter(fav => fav.pokedex_id !== pokemonId));
     } catch (error) {
-      console.error('Erreur lors de la suppression des favoris:', error);
       throw error;
     }
   }, []);
@@ -55,19 +53,15 @@ export const useFavorites = () => {
   const toggleFavorite = useCallback(async (pokemon: Pokemon) => {
     try {
       const isFav = favorites.some(fav => fav.pokedex_id === pokemon.pokedex_id);
-      console.log('🔄 Toggle favorite - Current state:', isFav, 'for', pokemon.name.fr);
-      
+
       if (isFav) {
-        console.log('➖ Removing from favorites');
         await removeFromFavorites(pokemon.pokedex_id);
         return false;
       } else {
-        console.log('➕ Adding to favorites');
         await addToFavorites(pokemon);
         return true;
       }
     } catch (error) {
-      console.error('Erreur lors du basculement des favoris:', error);
       throw error;
     }
   }, [favorites, addToFavorites, removeFromFavorites]);
@@ -81,7 +75,6 @@ export const useFavorites = () => {
       await FavoritesService.clearFavorites();
       setFavorites([]);
     } catch (error) {
-      console.error('Erreur lors de la suppression de tous les favoris:', error);
       throw error;
     }
   }, []);
@@ -105,33 +98,31 @@ export const useIsFavorite = (pokemonId: number) => {
   const [isFav, setIsFav] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    checkFavoriteStatus();
-  }, [pokemonId]);
-
-  const checkFavoriteStatus = async () => {
+  const checkFavoriteStatus = useCallback(async () => {
     try {
       setIsLoading(true);
       const result = await FavoritesService.isFavorite(pokemonId);
       setIsFav(result);
     } catch (error) {
-      console.error('Erreur lors de la vérification des favoris:', error);
       setIsFav(false);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pokemonId]);
 
-  const toggle = async (pokemon: Pokemon) => {
+  useEffect(() => {
+    checkFavoriteStatus();
+  }, [checkFavoriteStatus]);
+
+  const toggle = useCallback(async (pokemon: Pokemon) => {
     try {
       const newStatus = await FavoritesService.toggleFavorite(pokemon);
       setIsFav(newStatus);
       return newStatus;
     } catch (error) {
-      console.error('Erreur lors du basculement:', error);
       throw error;
     }
-  };
+  }, []);
 
   return {
     isFavorite: isFav,

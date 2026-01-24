@@ -101,7 +101,7 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
     try {
       await toggleFav(displayPokemon);
     } catch (err) {
-      console.error('Erreur favoris:', err);
+      // Silently handle error - UI will reflect current state
     }
   }, [displayPokemon, toggleFav]);
 
