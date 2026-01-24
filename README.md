@@ -1,139 +1,167 @@
-# 🔴 Pokédex React Native - Pokemania
+<div align="center">
 
-Une application mobile Pokédex moderne développée avec React Native, Expo et TypeScript, utilisant l'API Tyradex.
+# Pokemania
 
-## 🚀 Fonctionnalités
+### Votre Pokedex de poche
 
-- ✅ **Liste complète des Pokémon** avec images et informations de base
-- ✅ **Détails complets** avec statistiques, types, talents et sprites shiny
-- ✅ **Recherche avancée** par nom, type et génération
-- ✅ **Interface moderne** avec design inspiré de Pokémon
-- ✅ **Navigation fluide** entre les écrans
-- ✅ **Gestion d'état robuste** avec React Query
-- 🔄 **Favoris** (à venir)
+[![React Native](https://img.shields.io/badge/React_Native-0.79-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-53-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-## 🛠️ Technologies utilisées
+<br/>
 
-- **React Native** avec Expo
-- **TypeScript** pour la sécurité des types
-- **React Navigation** pour la navigation
-- **React Query (TanStack Query)** pour la gestion des données
-- **Axios** pour les requêtes API
-- **API Tyradex** pour les données Pokémon
+<img src="assets/pokeball-logo.svg" alt="Pokemania Logo" width="180"/>
 
-## 📱 Écrans
+<br/>
 
-1. **Accueil** - Point d'entrée avec navigation vers les autres sections
-2. **Liste des Pokémon** - Affichage en grille avec recherche rapide
-3. **Détails du Pokémon** - Informations complètes avec sprites et statistiques
-4. **Recherche avancée** - Filtres par type et génération
-5. **Favoris** - Sauvegarde des Pokémon préférés (à venir)
+**Application mobile moderne pour explorer l'univers Pokemon**
 
-## 🚀 Installation et démarrage
+[Fonctionnalites](#-fonctionnalites) •
+[Installation](#-installation) •
+[Stack technique](#-stack-technique) •
+[Architecture](#-architecture)
 
-### Prérequis
-- Node.js (v16 ou plus récent)
-- Expo CLI
-- Un appareil mobile ou émulateur
-
-### Installation
-```bash
-# Cloner le projet (si depuis un repo)
-git clone <url-du-repo>
-cd pokemania
-
-# Installer les dépendances
-npm install
-
-# Démarrer l'application
-npm start
-```
-
-### Démarrage sur différentes plateformes
-```bash
-# Android
-npm run android
-
-# iOS (macOS uniquement)
-npm run ios
-
-# Web
-npm run web
-```
-
-## 📁 Structure du projet
-
-```
-src/
-├── components/          # Composants réutilisables
-├── hooks/              # Hooks personnalisés
-├── navigation/         # Configuration de navigation
-├── screens/            # Écrans de l'application
-├── services/           # Services API
-├── types/              # Définitions TypeScript
-└── utils/              # Utilitaires
-```
-
-## 🌐 API
-
-L'application utilise l'API publique **Tyradex** :
-- **Liste complète** : `GET https://tyradex.app/api/v1/pokemon`
-- **Détail** : `GET https://tyradex.app/api/v1/pokemon/<id>/[region]`
-
-### Headers de politesse
-```typescript
-'User-Agent': 'Pokemania-App/1.0.0'
-'Content-Type': 'application/json'
-```
-
-## 🎨 Design
-
-- **Couleur principale** : Rouge Pokémon (#DC2626)
-- **Interface moderne** avec ombres et bordures arrondies
-- **Responsive** pour différentes tailles d'écran
-- **Animations fluides** pour la navigation
-
-## 🔧 Fonctionnalités techniques
-
-- **Mise en cache intelligente** avec React Query
-- **Gestion d'erreur robuste** avec retry automatique
-- **Types TypeScript stricts** pour la sécurité
-- **Performance optimisée** avec FlatList virtualisée
-- **Recherche en temps réel** côté client
-
-## 📊 Données Pokémon
-
-Chaque Pokémon inclut :
-- Informations de base (nom, numéro, catégorie)
-- Sprites normaux et shiny
-- Types avec couleurs appropriées
-- Statistiques complètes (PV, Attaque, Défense, etc.)
-- Talents (y compris talents cachés)
-- Informations physiques (taille, poids)
-- Génération d'origine
-
-## 🚀 Prochaines fonctionnalités
-
-- [ ] Système de favoris avec persistance locale
-- [ ] Comparaison de Pokémon
-- [ ] Filtres avancés (stats, capacités)
-- [ ] Mode sombre
-- [ ] Partage de Pokémon
-- [ ] Cache d'images pour utilisation hors ligne
-
-## 🤝 Contribution
-
-Les contributions sont les bienvenues ! N'hésitez pas à :
-1. Fork le projet
-2. Créer une branche feature
-3. Commit vos changements
-4. Push vers la branche
-5. Ouvrir une Pull Request
-
-## 📄 Licence
-
-Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
+</div>
 
 ---
 
-**Développé avec ❤️ et l'API Tyradex**
+## Fonctionnalites
+
+<table>
+<tr>
+<td width="50%">
+
+### Catalogue complet
+Parcourez l'integralite des Pokemon avec une interface fluide et reactive. Recherche instantanee par nom, numero ou type.
+
+### Fiches detaillees
+Statistiques completes, chaine d'evolution interactive, talents (y compris caches), faiblesses et resistances.
+
+### Mode Shiny & Gigamax
+Visualisez les sprites alternatifs d'un simple tap. Support des formes Gigamax quand disponibles.
+
+</td>
+<td width="50%">
+
+### Donnees competitives
+BST (Base Stat Total), groupes d'oeufs, taux de capture, ratio male/femelle - tout pour les dresseurs serieux.
+
+### Favoris persistants
+Sauvegardez vos Pokemon preferes. Vos favoris sont conserves meme apres fermeture de l'app.
+
+### Mode hors-ligne
+Cache intelligent avec React Query. Consultez vos donnees meme sans connexion.
+
+</td>
+</tr>
+</table>
+
+---
+
+## Stack technique
+
+| Technologie | Usage |
+|-------------|-------|
+| **React Native** | Framework mobile cross-platform |
+| **Expo** | Toolchain et build system |
+| **TypeScript** | Typage statique |
+| **TanStack Query** | Gestion du cache et des requetes |
+| **React Navigation** | Navigation entre ecrans |
+| **AsyncStorage** | Persistance locale des favoris |
+| **Axios** | Client HTTP |
+
+---
+
+## Installation
+
+### Prerequisites
+
+- Node.js 18+
+- npm ou yarn
+- Expo Go sur votre mobile (ou un emulateur)
+
+### Demarrage rapide
+
+```bash
+# Cloner le repository
+git clone https://github.com/Mohammed-ela/pokemania.git
+cd pokemania
+
+# Installer les dependances
+npm install
+
+# Lancer l'application
+npm start
+```
+
+Scannez le QR code avec Expo Go (Android) ou l'app Camera (iOS).
+
+### Scripts disponibles
+
+| Commande | Description |
+|----------|-------------|
+| `npm start` | Demarre le serveur de dev Expo |
+| `npm run android` | Lance sur emulateur Android |
+| `npm run ios` | Lance sur simulateur iOS |
+| `npm run web` | Lance la version web |
+
+---
+
+## Architecture
+
+```
+src/
+├── components/       # Composants reutilisables (PokemonCard...)
+├── hooks/            # Hooks personnalises (usePokemon, useFavorites)
+├── navigation/       # Configuration React Navigation
+├── screens/          # Ecrans de l'application
+│   ├── HomeScreen
+│   ├── PokemonListScreen
+│   ├── PokemonDetailScreen
+│   ├── SearchScreen
+│   └── FavoritesScreen
+├── services/         # Logique metier (API, favoris)
+├── types/            # Definitions TypeScript
+└── utils/            # Utilitaires (couleurs des types...)
+```
+
+---
+
+## API
+
+Les donnees proviennent de l'API publique **[Tyradex](https://tyradex.app)** - une API Pokemon francophone.
+
+```
+Base URL: https://tyradex.app/api/v1
+```
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /pokemon` | Liste complete des Pokemon |
+| `GET /pokemon/:id` | Details d'un Pokemon |
+
+---
+
+## Performances
+
+- **Images optimisees** avec `expo-image` (cache memoire + disque)
+- **Composants memoizes** avec `React.memo`
+- **FlatList virtualisee** pour les longues listes
+- **Cache persistant** React Query (7 jours)
+
+---
+
+## Licence
+
+MIT - Voir [LICENSE](LICENSE) pour plus de details.
+
+---
+
+<div align="center">
+
+**Fait avec React Native et l'API Tyradex**
+
+[Mohammed El Amrani](https://github.com/Mohammed-ela)
+
+</div>
