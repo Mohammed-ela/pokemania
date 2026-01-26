@@ -7,8 +7,8 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Dimensions,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { PokemonDetailScreenProps } from '../types/navigation';
 import { usePokemonById } from '../hooks/usePokemon';

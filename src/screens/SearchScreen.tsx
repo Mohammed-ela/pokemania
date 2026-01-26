@@ -6,9 +6,9 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   FlatList,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { SearchScreenProps } from '../types/navigation';
 import { useAllPokemon, useFilteredPokemon, usePokemonTypes, usePokemonGenerations } from '../hooks/usePokemon';
 

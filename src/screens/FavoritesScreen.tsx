@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { FavoritesScreenProps } from '../types/navigation';
 import { Pokemon } from '../types/pokemon';
 import { useFavorites } from '../hooks/useFavorites';

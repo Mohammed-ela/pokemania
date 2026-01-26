@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { PokemonListScreenProps } from '../types/navigation';
 import { Pokemon } from '../types/pokemon';
 import { useAllPokemon, useFilteredPokemon } from '../hooks/usePokemon';
