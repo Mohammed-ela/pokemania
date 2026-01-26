@@ -20,14 +20,18 @@ const AppNavigator: React.FC = () => {
         initialRouteName="Home"
         screenOptions={{
           headerStyle: {
-            backgroundColor: '#DC2626', // Rouge Pokémon
+            backgroundColor: '#F8FAFC',
+            elevation: 0,
+            shadowOpacity: 0,
           },
-          headerTintColor: '#fff',
+          headerTintColor: '#1E293B',
           headerTitleStyle: {
-            fontWeight: '800',
-            fontSize: 18,
+            fontWeight: '700',
+            fontSize: 17,
+            color: '#1E293B',
           },
-          headerShadowVisible: true,
+          headerShadowVisible: false,
+          headerBackTitleVisible: false,
           animation: 'slide_from_right',
         }}
       >
@@ -35,10 +39,7 @@ const AppNavigator: React.FC = () => {
           name="Home"
           component={HomeScreen}
           options={{
-            title: 'Pokemania',
-            headerStyle: {
-              backgroundColor: '#DC2626',
-            },
+            headerShown: false,
           }}
         />
         
