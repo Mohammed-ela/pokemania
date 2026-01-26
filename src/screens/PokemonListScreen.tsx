@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PokemonListScreenProps } from '../types/navigation';
+import { useTheme } from '../context/ThemeContext';
 import { Pokemon } from '../types/pokemon';
 import { useAllPokemon, useFilteredPokemon } from '../hooks/usePokemon';
 import PokemonCard from '../components/PokemonCard';
@@ -20,6 +21,7 @@ const ITEM_HEIGHT = 180;
 const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const { data: allPokemon, isLoading, error, refetch } = useAllPokemon();
+  const { colors } = useTheme();
 
   // Filtrage des Pokémon basé sur la recherche
   const filteredPokemon = useFilteredPokemon(allPokemon, {
@@ -63,18 +65,18 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
 
   if (isLoading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#DC2626" />
-        <Text style={styles.loadingText}>Chargement des Pokémon...</Text>
+      <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Chargement des Pokémon...</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.centerContainer}>
+      <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
         <Text style={styles.errorText}>❌</Text>
-        <Text style={styles.errorMessage}>
+        <Text style={[styles.errorMessage, { color: colors.textSecondary }]}>
           Erreur lors du chargement des Pokémon
         </Text>
         <TouchableOpacity
@@ -90,15 +92,15 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
       {/* Barre de recherche */}
-      <View style={styles.searchContainer}>
+      <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { backgroundColor: colors.surfaceVariant, color: colors.text, borderColor: colors.border }]}
           placeholder="Rechercher un Pokémon..."
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor={colors.textMuted}
           accessibilityLabel="Rechercher un Pokémon"
           returnKeyType="search"
           autoCorrect={false}
@@ -106,8 +108,8 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
       </View>
 
       {/* Résultats */}
-      <View style={styles.resultsHeader}>
-        <Text style={styles.resultsText}>
+      <View style={[styles.resultsHeader, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.resultsText, { color: colors.textSecondary }]}>
           {filteredPokemon.length} Pokémon trouvé(s)
         </Text>
       </View>
@@ -179,9 +181,6 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     padding: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   searchInput: {
     backgroundColor: '#F8FAFC',
@@ -197,7 +196,6 @@ const styles = StyleSheet.create({
   resultsHeader: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
   },
   resultsText: {
     fontSize: 14,

@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { PokemonDetailScreenProps } from '../types/navigation';
+import { useTheme } from '../context/ThemeContext';
 import { usePokemonById } from '../hooks/usePokemon';
 import { useFavorites } from '../hooks/useFavorites';
 import { getTypeColor } from '../utils/typeColors';
@@ -79,6 +80,7 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
   const { pokemonId, pokemon: initialPokemon } = route.params;
   const [isShiny, setIsShiny] = useState(false);
   const [showGmax, setShowGmax] = useState(false);
+  const { colors } = useTheme();
 
   const { data: pokemon, isLoading, error } = usePokemonById(pokemonId);
   const { favorites, toggleFavorite: toggleFav } = useFavorites();
@@ -135,27 +137,27 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
 
   if (isLoading && !initialPokemon) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#DC2626" />
-        <Text style={styles.loadingText}>Chargement des détails...</Text>
+      <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Chargement des détails...</Text>
       </View>
     );
   }
 
   if (error && !initialPokemon) {
     return (
-      <View style={styles.centerContainer}>
+      <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
         <Text style={styles.errorText}>❌</Text>
-        <Text style={styles.errorMessage}>Erreur lors du chargement</Text>
+        <Text style={[styles.errorMessage, { color: colors.textSecondary }]}>Erreur lors du chargement</Text>
       </View>
     );
   }
 
   if (!displayPokemon) {
     return (
-      <View style={styles.centerContainer}>
+      <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
         <Text style={styles.errorText}>❓</Text>
-        <Text style={styles.errorMessage}>Pokémon non trouvé</Text>
+        <Text style={[styles.errorMessage, { color: colors.textSecondary }]}>Pokémon non trouvé</Text>
       </View>
     );
   }
@@ -163,7 +165,7 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
   // MissingNo. special case
   if (displayPokemon.pokedex_id === 0) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <View style={styles.imageContainer}>
@@ -197,7 +199,7 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header avec gradient basé sur le type */}
         <View style={[styles.header, { backgroundColor: getTypeColor(displayPokemon.types?.[0]?.name || 'Normal') + '15' }]}>

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SearchResultsScreenProps } from '../types/navigation';
+import { useTheme } from '../context/ThemeContext';
 import { Pokemon } from '../types/pokemon';
 import { useAllPokemon, useFilteredPokemon } from '../hooks/usePokemon';
 import PokemonCard from '../components/PokemonCard';
@@ -22,6 +23,7 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({
 }) => {
   const { filters } = route.params;
   const { data: allPokemon, isLoading, error } = useAllPokemon();
+  const { colors } = useTheme();
 
   // Appliquer les filtres reçus
   const filteredPokemon = useFilteredPokemon(allPokemon, filters);
@@ -75,18 +77,18 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({
 
   if (isLoading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#DC2626" />
-        <Text style={styles.loadingText}>Chargement des résultats...</Text>
+      <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Chargement des résultats...</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.centerContainer}>
+      <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
         <Text style={styles.errorText}>❌</Text>
-        <Text style={styles.errorMessage}>
+        <Text style={[styles.errorMessage, { color: colors.textSecondary }]}>
           Erreur lors du chargement des résultats
         </Text>
         <TouchableOpacity
@@ -102,16 +104,16 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
       {/* En-tête avec filtres appliqués */}
-      <View style={styles.filtersHeader}>
-        <Text style={styles.filtersTitle}>Filtres appliqués :</Text>
-        <Text style={styles.filtersDescription}>{getFilterDescription()}</Text>
+      <View style={[styles.filtersHeader, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.filtersTitle, { color: colors.textSecondary }]}>Filtres appliqués :</Text>
+        <Text style={[styles.filtersDescription, { color: colors.textSecondary }]}>{getFilterDescription()}</Text>
       </View>
 
       {/* Résultats */}
-      <View style={styles.resultsHeader}>
-        <Text style={styles.resultsText}>
+      <View style={[styles.resultsHeader, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.resultsText, { color: colors.text }]}>
           {filteredPokemon.length} résultat(s) trouvé(s)
         </Text>
         <TouchableOpacity
@@ -144,8 +146,8 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({
       ) : (
         <View style={styles.noResultsContainer}>
           <Text style={styles.noResultsEmoji}>🔍</Text>
-          <Text style={styles.noResultsTitle}>Aucun résultat</Text>
-          <Text style={styles.noResultsText}>
+          <Text style={[styles.noResultsTitle, { color: colors.text }]}>Aucun résultat</Text>
+          <Text style={[styles.noResultsText, { color: colors.textSecondary }]}>
             Aucun Pokémon ne correspond aux critères sélectionnés.
           </Text>
           <TouchableOpacity
@@ -208,11 +210,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   filtersHeader: {
-    backgroundColor: '#FFFFFF',
     paddingVertical: 18,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   filtersTitle: {
     fontSize: 13,
@@ -233,9 +232,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   resultsText: {
     fontSize: 16,

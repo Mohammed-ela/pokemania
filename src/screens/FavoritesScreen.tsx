@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FavoritesScreenProps } from '../types/navigation';
+import { useTheme } from '../context/ThemeContext';
 import { Pokemon } from '../types/pokemon';
 import { useFavorites } from '../hooks/useFavorites';
 import PokemonCard from '../components/PokemonCard';
@@ -18,6 +19,7 @@ const ITEM_HEIGHT = 180;
 
 const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
   const { favorites, isLoading, clearAllFavorites } = useFavorites();
+  const { colors } = useTheme();
 
   // Callback memoizé pour la navigation
   const handlePokemonPress = useCallback(
@@ -60,10 +62,10 @@ const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#DC2626" />
-          <Text style={styles.loadingText}>Chargement des favoris...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Chargement des favoris...</Text>
         </View>
       </SafeAreaView>
     );
@@ -71,14 +73,14 @@ const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
 
   if (favorites.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
         <View style={styles.centerContainer}>
           <Text style={styles.emoji}>⭐</Text>
-          <Text style={styles.title}>Aucun favori</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.text }]}>Aucun favori</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Vous n'avez pas encore de Pokémon favoris
           </Text>
-          <Text style={styles.description}>
+          <Text style={[styles.description, { color: colors.textMuted }]}>
             Ajoutez des Pokémon à vos favoris en cliquant sur l'étoile dans leur
             fiche détaillée.
           </Text>
@@ -88,10 +90,10 @@ const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
       {/* En-tête */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>
+      <View style={[styles.header, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>
           {favorites.length} Pokémon favori{favorites.length > 1 ? 's' : ''}
         </Text>
         <TouchableOpacity
@@ -171,9 +173,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
   },
   headerTitle: {
     fontSize: 18,

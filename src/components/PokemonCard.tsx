@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Pokemon } from '../types/pokemon';
 import { getTypeColor } from '../utils/typeColors';
+import { useTheme } from '../context/ThemeContext';
 
 // Placeholder pour le chargement des images
 const blurhash = 'L6PZfSi_.AyE_3t7t7R**0o#DgR4';
@@ -13,19 +14,21 @@ interface PokemonCardProps {
 }
 
 const PokemonCard: React.FC<PokemonCardProps> = ({ pokemon, onPress }) => {
+  const { colors } = useTheme();
+
   const handlePress = useCallback(() => {
     onPress(pokemon);
   }, [pokemon, onPress]);
 
   return (
     <TouchableOpacity
-      style={styles.pokemonCard}
+      style={[styles.pokemonCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
       onPress={handlePress}
       activeOpacity={0.7}
       accessibilityLabel={`${pokemon.name.fr}, numéro ${pokemon.pokedex_id}`}
       accessibilityRole="button"
     >
-      <View style={styles.pokemonImageContainer}>
+      <View style={[styles.pokemonImageContainer, { backgroundColor: colors.surfaceVariant }]}>
         <Image
           source={{ uri: pokemon.sprites.regular }}
           style={styles.pokemonImage}
@@ -37,10 +40,10 @@ const PokemonCard: React.FC<PokemonCardProps> = ({ pokemon, onPress }) => {
       </View>
 
       <View style={styles.pokemonInfo}>
-        <Text style={styles.pokemonNumber}>
+        <Text style={[styles.pokemonNumber, { color: colors.textMuted }]}>
           #{pokemon.pokedex_id.toString().padStart(3, '0')}
         </Text>
-        <Text style={styles.pokemonName} numberOfLines={1}>
+        <Text style={[styles.pokemonName, { color: colors.text }]} numberOfLines={1}>
           {pokemon.name.fr}
         </Text>
         <View style={styles.typesContainer}>
@@ -60,7 +63,6 @@ const PokemonCard: React.FC<PokemonCardProps> = ({ pokemon, onPress }) => {
 
 const styles = StyleSheet.create({
   pokemonCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     margin: 8,
@@ -72,12 +74,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
   },
   pokemonImageContainer: {
     alignItems: 'center',
     marginBottom: 12,
-    backgroundColor: '#F8FAFC',
     borderRadius: 12,
     padding: 8,
   },
@@ -90,7 +90,6 @@ const styles = StyleSheet.create({
   },
   pokemonNumber: {
     fontSize: 11,
-    color: '#94A3B8',
     marginBottom: 4,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -98,7 +97,6 @@ const styles = StyleSheet.create({
   pokemonName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1E293B',
     marginBottom: 8,
     textAlign: 'center',
     letterSpacing: 0.2,
@@ -127,7 +125,5 @@ const styles = StyleSheet.create({
   },
 });
 
-// React.memo avec comparaison personnalisée pour éviter les re-renders inutiles
-export default memo(PokemonCard, (prevProps, nextProps) => {
-  return prevProps.pokemon.pokedex_id === nextProps.pokemon.pokedex_id;
-});
+// React.memo - re-render uniquement si le pokemon ou le thème change
+export default memo(PokemonCard);

@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { HomeScreenProps } from '../types/navigation';
+import { useTheme } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
@@ -17,7 +18,7 @@ const PokeballLogo: React.FC = () => {
     <View style={styles.pokeballWrapper}>
       {/* Cercle décoratif en arrière-plan */}
       <View style={styles.pokeballHalo} />
-      
+
       {/* Éléments décoratifs flottants */}
       <View style={[styles.sparkle, styles.sparkle1]}>
         <Text style={styles.sparkleText}>✨</Text>
@@ -28,12 +29,12 @@ const PokeballLogo: React.FC = () => {
       <View style={[styles.sparkle, styles.sparkle3]}>
         <Text style={styles.sparkleText}>✨</Text>
       </View>
-      
+
       {/* Pokéball principale */}
       <View style={styles.pokeballContainer}>
         {/* Partie supérieure rouge */}
         <View style={styles.pokeballTop} />
-        
+
         {/* Bande centrale noire */}
         <View style={styles.pokeballMiddle}>
           {/* Cercle central blanc */}
@@ -44,7 +45,7 @@ const PokeballLogo: React.FC = () => {
             <View style={styles.pokeballShine} />
           </View>
         </View>
-        
+
         {/* Partie inférieure blanche */}
         <View style={styles.pokeballBottom} />
       </View>
@@ -53,14 +54,27 @@ const PokeballLogo: React.FC = () => {
 };
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
+  const { colors, toggleTheme, isDark } = useTheme();
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Bouton toggle thème en haut à droite */}
+      <TouchableOpacity
+        style={[styles.themeToggle, { backgroundColor: colors.surface }]}
+        onPress={toggleTheme}
+        accessibilityLabel={isDark ? 'Activer le mode clair' : 'Activer le mode sombre'}
+      >
+        <Text style={styles.themeToggleIcon}>{isDark ? '☀️' : '🌙'}</Text>
+      </TouchableOpacity>
+
       <View style={styles.content}>
         {/* Header avec logo Pokémon */}
         <View style={styles.header}>
-          <Text style={styles.title}>Pokemania</Text>
-          <Text style={styles.subtitle}>Pokédex de poche</Text>
-          <Text style={styles.description}>Explorez le monde des Pokémon</Text>
+          <Text style={[styles.title, { color: colors.primary }]}>Pokemania</Text>
+          <Text style={[styles.subtitle, { color: colors.primary }]}>Pokédex de poche</Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>
+            Explorez le monde des Pokémon
+          </Text>
         </View>
 
         {/* Pokéball stylée */}
@@ -94,10 +108,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>
+          <Text style={[styles.footerText, { color: colors.textMuted }]}>
             Données fournies par l'API Tyradex
           </Text>
-          <Text style={styles.footerVersion}>
+          <Text style={[styles.footerVersion, { color: colors.textMuted }]}>
             Pokemania v1.0.0
           </Text>
         </View>
@@ -109,7 +123,25 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F1F5F9',
+  },
+  themeToggle: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  themeToggleIcon: {
+    fontSize: 22,
   },
   content: {
     flex: 1,
@@ -123,7 +155,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 48,
     fontWeight: '800',
-    color: '#DC2626',
     marginBottom: 12,
     textShadowColor: 'rgba(220, 38, 38, 0.2)',
     textShadowOffset: { width: 0, height: 3 },
@@ -132,15 +163,14 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 20,
-    color: '#EF4444',
     textAlign: 'center',
     fontWeight: '700',
     marginBottom: 8,
     letterSpacing: 0.5,
+    opacity: 0.9,
   },
   description: {
     fontSize: 16,
-    color: '#64748B',
     textAlign: 'center',
     fontWeight: '500',
   },
@@ -286,14 +316,12 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 11,
-    color: '#94A3B8',
     textAlign: 'center',
     marginBottom: 4,
     fontWeight: '500',
   },
   footerVersion: {
     fontSize: 10,
-    color: '#CBD5E1',
     textAlign: 'center',
     fontWeight: '600',
     letterSpacing: 0.5,
