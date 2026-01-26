@@ -11,6 +11,7 @@ import PokemonDetailScreen from '../screens/PokemonDetailScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import SearchScreen from '../screens/SearchScreen';
 import SearchResultsScreen from '../screens/SearchResultsScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -81,6 +82,14 @@ const AppNavigator: React.FC = () => {
           component={SearchResultsScreen}
           options={{
             title: 'Résultats de recherche',
+          }}
+        />
+
+        <Stack.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{
+            title: 'Paramètres',
           }}
         />
       </Stack.Navigator>

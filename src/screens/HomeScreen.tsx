@@ -11,6 +11,7 @@ import { HomeScreenProps } from '../types/navigation';
 import { useTheme } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
+const APP_VERSION = '1.0.0';
 
 // Composant Pokéball stylée
 const PokeballLogo: React.FC = () => {
@@ -54,17 +55,17 @@ const PokeballLogo: React.FC = () => {
 };
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-  const { colors, toggleTheme, isDark } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Bouton toggle thème en haut à droite */}
+      {/* Bouton paramètres en haut à droite */}
       <TouchableOpacity
-        style={[styles.themeToggle, { backgroundColor: colors.surface }]}
-        onPress={toggleTheme}
-        accessibilityLabel={isDark ? 'Activer le mode clair' : 'Activer le mode sombre'}
+        style={[styles.settingsButton, { backgroundColor: colors.surface }]}
+        onPress={() => navigation.navigate('Settings')}
+        accessibilityLabel="Ouvrir les paramètres"
       >
-        <Text style={styles.themeToggleIcon}>{isDark ? '☀️' : '🌙'}</Text>
+        <Text style={styles.settingsIcon}>⚙️</Text>
       </TouchableOpacity>
 
       <View style={styles.content}>
@@ -112,7 +113,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             Données fournies par l'API Tyradex
           </Text>
           <Text style={[styles.footerVersion, { color: colors.textMuted }]}>
-            Pokemania v1.0.0
+            Pokemania v{APP_VERSION}
           </Text>
         </View>
       </View>
@@ -124,13 +125,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  themeToggle: {
+  settingsButton: {
     position: 'absolute',
     top: 50,
     right: 20,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
@@ -140,8 +141,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  themeToggleIcon: {
-    fontSize: 22,
+  settingsIcon: {
+    fontSize: 24,
   },
   content: {
     flex: 1,

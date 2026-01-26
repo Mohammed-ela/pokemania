@@ -95,16 +95,27 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
       {/* Barre de recherche */}
       <View style={[styles.searchContainer, { backgroundColor: colors.surface }]}>
-        <TextInput
-          style={[styles.searchInput, { backgroundColor: colors.surfaceVariant, color: colors.text, borderColor: colors.border }]}
-          placeholder="Rechercher un Pokémon..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholderTextColor={colors.textMuted}
-          accessibilityLabel="Rechercher un Pokémon"
-          returnKeyType="search"
-          autoCorrect={false}
-        />
+        <View style={styles.searchInputWrapper}>
+          <TextInput
+            style={[styles.searchInput, { backgroundColor: colors.surfaceVariant, color: colors.text, borderColor: colors.border }]}
+            placeholder="Rechercher un Pokémon..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor={colors.textMuted}
+            accessibilityLabel="Rechercher un Pokémon"
+            returnKeyType="search"
+            autoCorrect={false}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity
+              style={[styles.clearButton, { backgroundColor: colors.textMuted }]}
+              onPress={() => setSearchQuery('')}
+              accessibilityLabel="Effacer la recherche"
+            >
+              <Text style={styles.clearButtonText}>✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Résultats */}
@@ -182,10 +193,29 @@ const styles = StyleSheet.create({
   searchContainer: {
     padding: 16,
   },
+  searchInputWrapper: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  clearButton: {
+    position: 'absolute',
+    right: 12,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clearButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
   searchInput: {
     backgroundColor: '#F8FAFC',
     paddingHorizontal: 18,
     paddingVertical: 14,
+    paddingRight: 44,
     borderRadius: 12,
     fontSize: 16,
     color: '#1E293B',

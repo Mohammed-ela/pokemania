@@ -23,6 +23,7 @@ export type RootStackParamList = {
       generation?: number;
     };
   };
+  Settings: undefined;
 };
 
 // Types de props pour chaque écran
@@ -32,6 +33,7 @@ export type PokemonDetailScreenProps = NativeStackScreenProps<RootStackParamList
 export type FavoritesScreenProps = NativeStackScreenProps<RootStackParamList, 'Favorites'>;
 export type SearchScreenProps = NativeStackScreenProps<RootStackParamList, 'Search'>;
 export type SearchResultsScreenProps = NativeStackScreenProps<RootStackParamList, 'SearchResults'>;
+export type SettingsScreenProps = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
 declare global {
   namespace ReactNavigation {

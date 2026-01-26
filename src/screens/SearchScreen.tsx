@@ -51,13 +51,24 @@ const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
         {/* Recherche par nom */}
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Recherche par nom</Text>
-          <TextInput
-            style={[styles.searchInput, { backgroundColor: colors.surfaceVariant, color: colors.text, borderColor: colors.border }]}
-            placeholder="Nom du Pokémon..."
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            placeholderTextColor={colors.textMuted}
-          />
+          <View style={styles.searchInputWrapper}>
+            <TextInput
+              style={[styles.searchInput, { backgroundColor: colors.surfaceVariant, color: colors.text, borderColor: colors.border }]}
+              placeholder="Nom du Pokémon..."
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+              placeholderTextColor={colors.textMuted}
+            />
+            {searchTerm.length > 0 && (
+              <TouchableOpacity
+                style={[styles.clearInputButton, { backgroundColor: colors.textMuted }]}
+                onPress={() => setSearchTerm('')}
+                accessibilityLabel="Effacer la recherche"
+              >
+                <Text style={styles.clearInputText}>✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* Filtre par type */}
@@ -221,16 +232,35 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     letterSpacing: 0.3,
   },
+  searchInputWrapper: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
   searchInput: {
     backgroundColor: '#F8FAFC',
     paddingHorizontal: 18,
     paddingVertical: 14,
+    paddingRight: 44,
     borderRadius: 12,
     fontSize: 16,
     color: '#1E293B',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     fontWeight: '500',
+  },
+  clearInputButton: {
+    position: 'absolute',
+    right: 12,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clearInputText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
   filterContainer: {
     flexDirection: 'row',
