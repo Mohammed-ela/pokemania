@@ -15,9 +15,6 @@ import { Pokemon } from '../types/pokemon';
 import { useAllPokemon, useFilteredPokemon } from '../hooks/usePokemon';
 import PokemonCard from '../components/PokemonCard';
 
-// Hauteur estimée d'une carte pour optimiser le scroll
-const ITEM_HEIGHT = 180;
-
 const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const { data: allPokemon, isLoading, error, refetch } = useAllPokemon();
@@ -50,16 +47,6 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
   // Optimisation FlatList : extraction de clé
   const keyExtractor = useCallback(
     (item: Pokemon) => item.pokedex_id.toString(),
-    []
-  );
-
-  // Optimisation FlatList : calcul de layout (évite les mesures)
-  const getItemLayout = useCallback(
-    (_: unknown, index: number) => ({
-      length: ITEM_HEIGHT,
-      offset: ITEM_HEIGHT * Math.floor(index / 2),
-      index,
-    }),
     []
   );
 
@@ -136,10 +123,10 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
         columnWrapperStyle={styles.row}
         // Optimisations de performance
         removeClippedSubviews={true}
-        maxToRenderPerBatch={10}
-        windowSize={10}
+        maxToRenderPerBatch={12}
+        updateCellsBatchingPeriod={50}
+        windowSize={5}
         initialNumToRender={10}
-        getItemLayout={getItemLayout}
       />
     </SafeAreaView>
   );

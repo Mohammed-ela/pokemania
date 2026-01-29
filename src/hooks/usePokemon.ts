@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { PokemonAPI } from '../services/pokemonApi';
 import { Pokemon } from '../types/pokemon';
@@ -41,9 +42,10 @@ export const useFilteredPokemon = (
     generation?: number;
   }
 ) => {
-  if (!allPokemon) return [];
-  
-  return PokemonAPI.applyFilters(filters, allPokemon);
+  return useMemo(() => {
+    if (!allPokemon) return [];
+    return PokemonAPI.applyFilters(filters, allPokemon);
+  }, [allPokemon, filters.searchTerm, filters.type, filters.generation]);
 };
 
 /**
