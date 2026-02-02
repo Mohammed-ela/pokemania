@@ -36,6 +36,7 @@ yarn-error.*
 !.env.example
 *.secret
 credentials.json
+google-service-account.json
 secrets/
 
 # Claude Code
