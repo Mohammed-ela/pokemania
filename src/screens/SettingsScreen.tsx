@@ -5,17 +5,22 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Switch,
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SettingsScreenProps } from '../types/navigation';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme, ThemePreference } from '../context/ThemeContext';
 
 const APP_VERSION = '1.0.0';
 
+const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
+  { value: 'system', label: 'Système' },
+  { value: 'light', label: 'Clair' },
+  { value: 'dark', label: 'Sombre' },
+];
+
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
-  const { colors, isDark, toggleTheme } = useTheme();
+  const { colors, preference, setPreference } = useTheme();
 
   const openLink = (url: string) => {
     Linking.openURL(url).catch(() => {});
@@ -33,18 +38,30 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             <View style={styles.settingInfo}>
               <Text style={styles.settingIcon}>🌙</Text>
               <View>
-                <Text style={[styles.settingTitle, { color: colors.text }]}>Mode sombre</Text>
+                <Text style={[styles.settingTitle, { color: colors.text }]}>Thème</Text>
                 <Text style={[styles.settingDescription, { color: colors.textMuted }]}>
-                  {isDark ? 'Activé' : 'Désactivé'}
+                  « Système » suit le réglage du téléphone
                 </Text>
               </View>
             </View>
-            <Switch
-              value={isDark}
-              onValueChange={toggleTheme}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={isDark ? '#FFFFFF' : '#F4F4F5'}
-            />
+          </View>
+          <View style={[styles.themeSelector, { backgroundColor: colors.surfaceVariant }]}>
+            {THEME_OPTIONS.map((option) => {
+              const isSelected = preference === option.value;
+              return (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[styles.themeOption, isSelected && { backgroundColor: colors.primary }]}
+                  onPress={() => setPreference(option.value)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isSelected }}
+                >
+                  <Text style={[styles.themeOptionText, { color: isSelected ? '#FFFFFF' : colors.textSecondary }]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
@@ -161,6 +178,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  themeSelector: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 4,
+    borderRadius: 12,
+  },
+  themeOption: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 9,
+    alignItems: 'center',
+  },
+  themeOptionText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
   container: {
     flex: 1,
   },

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,15 +11,27 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FavoritesScreenProps } from '../types/navigation';
 import { useTheme } from '../context/ThemeContext';
 import { Pokemon } from '../types/pokemon';
-import { useFavorites } from '../hooks/useFavorites';
+import { useFavorites } from '../context/FavoritesContext';
+import { useAllPokemon } from '../hooks/usePokemon';
 import PokemonCard from '../components/PokemonCard';
 
 // Hauteur estimée d'une carte pour optimiser le scroll
 const ITEM_HEIGHT = 180;
 
 const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
-  const { favorites, isLoading, clearAllFavorites } = useFavorites();
+  const { favoriteIds, isLoading: isLoadingFavorites, clearFavorites } = useFavorites();
+  const { data: allPokemon, isLoading: isLoadingPokemon } = useAllPokemon();
   const { colors } = useTheme();
+  const isLoading = isLoadingFavorites || (favoriteIds.length > 0 && isLoadingPokemon);
+
+  // Données toujours à jour : on retrouve les favoris dans la liste complète, dans l'ordre d'ajout
+  const favorites = useMemo(() => {
+    if (!allPokemon) return [];
+    const byId = new Map(allPokemon.map((pokemon) => [pokemon.pokedex_id, pokemon]));
+    return favoriteIds
+      .map((id) => byId.get(id))
+      .filter((pokemon): pokemon is Pokemon => pokemon !== undefined);
+  }, [allPokemon, favoriteIds]);
 
   // Callback memoizé pour la navigation
   const handlePokemonPress = useCallback(
@@ -57,8 +69,8 @@ const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
   );
 
   const handleClearAll = useCallback(() => {
-    clearAllFavorites();
-  }, [clearAllFavorites]);
+    clearFavorites();
+  }, [clearFavorites]);
 
   if (isLoading) {
     return (
@@ -66,6 +78,20 @@ const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Chargement des favoris...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (favoriteIds.length > 0 && !allPokemon) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
+        <View style={styles.centerContainer}>
+          <Text style={styles.emoji}>📡</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Favoris indisponibles</Text>
+          <Text style={[styles.description, { color: colors.textMuted }]}>
+            Vérifiez votre connexion internet pour charger vos Pokémon favoris.
+          </Text>
         </View>
       </SafeAreaView>
     );

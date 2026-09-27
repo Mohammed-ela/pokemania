@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SplashScreen from 'expo-splash-screen';
 
+export type ThemePreference = 'system' | 'light' | 'dark';
 type ThemeMode = 'light' | 'dark';
 
 interface ThemeColors {
@@ -17,8 +20,9 @@ interface ThemeColors {
 
 interface ThemeContextType {
   mode: ThemeMode;
+  preference: ThemePreference;
   colors: ThemeColors;
-  toggleTheme: () => void;
+  setPreference: (preference: ThemePreference) => void;
   isDark: boolean;
 }
 
@@ -50,38 +54,54 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const THEME_STORAGE_KEY = 'pokemania-theme';
 
+// Garde l'écran de démarrage affiché tant que le thème n'est pas chargé (évite le flash clair)
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [mode, setMode] = useState<ThemeMode>('light');
+  const systemScheme = useColorScheme();
+  const [preference, setPreferenceState] = useState<ThemePreference>('system');
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     loadTheme();
   }, []);
 
+  useEffect(() => {
+    if (isReady) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [isReady]);
+
   const loadTheme = async () => {
     try {
       const savedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
-      if (savedTheme === 'dark' || savedTheme === 'light') {
-        setMode(savedTheme);
+      if (savedTheme === 'system' || savedTheme === 'dark' || savedTheme === 'light') {
+        setPreferenceState(savedTheme);
       }
     } catch (error) {
       // Utiliser le thème par défaut
+    } finally {
+      setIsReady(true);
     }
   };
 
-  const toggleTheme = async () => {
-    const newMode = mode === 'light' ? 'dark' : 'light';
-    setMode(newMode);
+  const setPreference = async (newPreference: ThemePreference) => {
+    setPreferenceState(newPreference);
     try {
-      await AsyncStorage.setItem(THEME_STORAGE_KEY, newMode);
+      await AsyncStorage.setItem(THEME_STORAGE_KEY, newPreference);
     } catch (error) {
       // Ignorer l'erreur de sauvegarde
     }
   };
 
+  const mode: ThemeMode =
+    preference === 'system' ? (systemScheme === 'dark' ? 'dark' : 'light') : preference;
   const colors = mode === 'light' ? lightColors : darkColors;
 
+  if (!isReady) return null;
+
   return (
-    <ThemeContext.Provider value={{ mode, colors, toggleTheme, isDark: mode === 'dark' }}>
+    <ThemeContext.Provider value={{ mode, preference, colors, setPreference, isDark: mode === 'dark' }}>
       {children}
     </ThemeContext.Provider>
   );

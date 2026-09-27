@@ -18,7 +18,6 @@
     "axios": "^1.11.0",
     "expo": "~57.0.25",
     "expo-image": "~57.0.5",
-    "expo-secure-store": "~57.0.4",
     "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",

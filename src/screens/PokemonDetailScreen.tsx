@@ -13,7 +13,7 @@ import { Image } from 'expo-image';
 import { PokemonDetailScreenProps } from '../types/navigation';
 import { useTheme } from '../context/ThemeContext';
 import { usePokemonById } from '../hooks/usePokemon';
-import { useFavorites } from '../hooks/useFavorites';
+import { useFavorites } from '../context/FavoritesContext';
 import { getTypeColor } from '../utils/typeColors';
 
 const { width } = Dimensions.get('window');
@@ -85,9 +85,9 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
   const { colors, isDark } = useTheme();
 
   const { data: pokemon, isLoading, error } = usePokemonById(pokemonId);
-  const { favorites, toggleFavorite: toggleFav } = useFavorites();
+  const { isFavorite: checkIsFavorite, toggleFavorite } = useFavorites();
 
-  const isFavorite = favorites.some((fav) => fav.pokedex_id === pokemonId);
+  const isFavorite = checkIsFavorite(pokemonId);
   const displayPokemon = pokemon || initialPokemon;
 
   // Calculer le BST (Base Stat Total)
@@ -100,14 +100,9 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
   // Vérifier si Gigamax disponible
   const hasGmax = displayPokemon?.sprites?.gmax?.regular;
 
-  const handleFavoritePress = useCallback(async () => {
-    if (!displayPokemon) return;
-    try {
-      await toggleFav(displayPokemon);
-    } catch (err) {
-      // Silently handle error - UI will reflect current state
-    }
-  }, [displayPokemon, toggleFav]);
+  const handleFavoritePress = useCallback(() => {
+    toggleFavorite(pokemonId);
+  }, [pokemonId, toggleFavorite]);
 
   const toggleShiny = useCallback(() => {
     setIsShiny((prev) => !prev);

@@ -5,7 +5,8 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ThemeProvider } from './src/context/ThemeContext';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+import { FavoritesProvider } from './src/context/FavoritesContext';
 import AppNavigator from './src/navigation/AppNavigator';
 
 // Configuration du client React Query avec cache optimisé
@@ -27,6 +28,12 @@ const asyncStoragePersister = createAsyncStoragePersister({
   throttleTime: 1000, // Évite les écritures trop fréquentes
 });
 
+// La barre d'état suit le thème de l'appli, pas celui du téléphone
+function ThemedStatusBar() {
+  const { isDark } = useTheme();
+  return <StatusBar style={isDark ? 'light' : 'dark'} />;
+}
+
 export default function App() {
   return (
     <SafeAreaProvider>
@@ -44,8 +51,10 @@ export default function App() {
             },
           }}
         >
-          <AppNavigator />
-          <StatusBar style="auto" />
+          <FavoritesProvider>
+            <AppNavigator />
+          </FavoritesProvider>
+          <ThemedStatusBar />
         </PersistQueryClientProvider>
       </ThemeProvider>
     </SafeAreaProvider>
