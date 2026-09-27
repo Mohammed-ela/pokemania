@@ -11,9 +11,13 @@ const blurhash = 'L6PZfSi_.AyE_3t7t7R**0o#DgR4';
 interface PokemonCardProps {
   pokemon: Pokemon;
   onPress: (pokemon: Pokemon) => void;
+  // Valeur mise en avant quand la liste est triée par stat (ex : Vit 200).
+  // Props primitives pour que React.memo évite de redessiner les cartes inchangées
+  statLabel?: string;
+  statValue?: number;
 }
 
-const PokemonCard: React.FC<PokemonCardProps> = ({ pokemon, onPress }) => {
+const PokemonCard: React.FC<PokemonCardProps> = ({ pokemon, onPress, statLabel, statValue }) => {
   const { colors } = useTheme();
 
   const handlePress = useCallback(() => {
@@ -29,6 +33,12 @@ const PokemonCard: React.FC<PokemonCardProps> = ({ pokemon, onPress }) => {
       accessibilityRole="button"
     >
       <View style={[styles.pokemonImageContainer, { backgroundColor: colors.surfaceVariant }]}>
+        {statLabel !== undefined && statValue !== undefined && (
+          <View style={[styles.statBadge, { backgroundColor: colors.primary }]}>
+            <Text style={styles.statBadgeLabel}>{statLabel}</Text>
+            <Text style={styles.statBadgeValue}>{statValue}</Text>
+          </View>
+        )}
         <Image
           source={{ uri: pokemon.sprites.regular }}
           style={styles.pokemonImage}
@@ -80,6 +90,28 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 12,
     padding: 8,
+  },
+  statBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    zIndex: 1,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 3,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  statBadgeLabel: {
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  statBadgeValue: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '900',
   },
   pokemonImage: {
     width: 80,

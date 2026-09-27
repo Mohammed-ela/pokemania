@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect, useDeferredValue } from 'react';
 import {
   View,
   Text,
@@ -7,23 +7,112 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
+  ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PokemonListScreenProps } from '../types/navigation';
 import { useTheme } from '../context/ThemeContext';
-import { Pokemon } from '../types/pokemon';
-import { useAllPokemon, useFilteredPokemon } from '../hooks/usePokemon';
+import { Pokemon, PokemonStats } from '../types/pokemon';
+import { useAllPokemon } from '../hooks/usePokemon';
 import PokemonCard from '../components/PokemonCard';
+
+type SortKey = 'number' | 'name' | 'bst' | keyof PokemonStats;
+type SortDirection = 'asc' | 'desc';
+
+const SORT_OPTIONS: { key: SortKey; label: string; badge?: string }[] = [
+  { key: 'number', label: 'N°' },
+  { key: 'name', label: 'Nom' },
+  { key: 'bst', label: 'Total', badge: 'Total' },
+  { key: 'hp', label: 'PV', badge: 'PV' },
+  { key: 'atk', label: 'Attaque', badge: 'Att' },
+  { key: 'def', label: 'Défense', badge: 'Déf' },
+  { key: 'spe_atk', label: 'Att. Spé', badge: 'Att.Spé' },
+  { key: 'spe_def', label: 'Déf. Spé', badge: 'Déf.Spé' },
+  { key: 'vit', label: 'Vitesse', badge: 'Vit' },
+];
+
+const isStatSort = (key: SortKey) => key !== 'number' && key !== 'name';
+
+// Minuscules sans accents : "Électhor" -> "electhor"
+const normalize = (text: string) =>
+  text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+const getSortValue = (pokemon: Pokemon, key: SortKey): number => {
+  const stats = pokemon.stats;
+  if (key === 'bst') return stats.hp + stats.atk + stats.def + stats.spe_atk + stats.spe_def + stats.vit;
+  return stats[key as keyof PokemonStats];
+};
 
 const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection }>({ key: 'number', direction: 'asc' });
+  const listRef = useRef<FlatList<Pokemon>>(null);
   const { data: allPokemon, isLoading, error, refetch } = useAllPokemon();
   const { colors } = useTheme();
 
-  // Filtrage des Pokémon basé sur la recherche
-  const filteredPokemon = useFilteredPokemon(allPokemon, {
-    searchTerm: searchQuery,
-  });
+  // Saisie et boutons de tri réagissent tout de suite : la liste suit juste après, sans bloquer l'écran
+  const deferredQuery = useDeferredValue(searchQuery);
+  const deferredSort = useDeferredValue(sort);
+  const isUpdating = searchQuery !== deferredQuery || sort !== deferredSort;
+  const sortKey = deferredSort.key;
+  const sortDirection = deferredSort.direction;
+
+  // Textes de recherche et noms triables de chaque Pokémon, calculés une seule fois
+  const { searchIndex, sortNames } = useMemo(() => {
+    const search = new Map<number, string>();
+    const names = new Map<number, string>();
+    allPokemon?.forEach((p) => {
+      search.set(p.pokedex_id, normalize(`${p.name?.fr ?? ''} ${p.name?.en ?? ''} ${p.pokedex_id}`));
+      names.set(p.pokedex_id, normalize(p.name?.fr ?? ''));
+    });
+    return { searchIndex: search, sortNames: names };
+  }, [allPokemon]);
+
+  // Tri de la liste complète, seulement quand le tri change (pas à chaque lettre tapée).
+  // Par stat, on exclut les Pokémon sans stats (MissingNo.)
+  const sortedAll = useMemo(() => {
+    if (!allPokemon) return [];
+    const factor = sortDirection === 'asc' ? 1 : -1;
+    const list = isStatSort(sortKey) ? allPokemon.filter((p) => p.stats) : [...allPokemon];
+    return list.sort((a, b) => {
+      let diff = 0;
+      if (sortKey === 'number') diff = a.pokedex_id - b.pokedex_id;
+      else if (sortKey === 'name') {
+        // Comparaison simple de noms sans accents : bien plus rapide que localeCompare
+        const nameA = sortNames.get(a.pokedex_id) ?? '';
+        const nameB = sortNames.get(b.pokedex_id) ?? '';
+        diff = nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
+      }
+      else diff = getSortValue(a, sortKey) - getSortValue(b, sortKey);
+      // À égalité, ordre du Pokédex
+      return diff !== 0 ? diff * factor : a.pokedex_id - b.pokedex_id;
+    });
+  }, [allPokemon, sortKey, sortDirection, sortNames]);
+
+  // La recherche filtre la liste déjà triée : l'ordre est conservé
+  const sortedPokemon = useMemo(() => {
+    const term = normalize(deferredQuery);
+    if (!term) return sortedAll;
+    return sortedAll.filter((p) => searchIndex.get(p.pokedex_id)?.includes(term));
+  }, [sortedAll, searchIndex, deferredQuery]);
+
+  // Retour en haut de la liste à chaque changement de tri
+  useEffect(() => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, [sortKey, sortDirection]);
+
+  const handleSortPress = useCallback((key: SortKey) => {
+    setSort((prev) =>
+      prev.key === key
+        ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
+        : // Les stats se lisent du plus fort au plus faible
+          { key, direction: isStatSort(key) ? 'desc' : 'asc' }
+    );
+  }, []);
+
+  // Tri appliqué à la liste (différé) : sert aux badges et au compteur
+  const activeSort = SORT_OPTIONS.find((option) => option.key === sortKey)!;
 
   // Callback memoizé pour la navigation
   const handlePokemonPress = useCallback(
@@ -39,9 +128,14 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
   // Render item avec le composant memoizé
   const renderPokemonItem = useCallback(
     ({ item }: { item: Pokemon }) => (
-      <PokemonCard pokemon={item} onPress={handlePokemonPress} />
+      <PokemonCard
+        pokemon={item}
+        onPress={handlePokemonPress}
+        statLabel={activeSort.badge && item.stats ? activeSort.badge : undefined}
+        statValue={activeSort.badge && item.stats ? getSortValue(item, sortKey) : undefined}
+      />
     ),
-    [handlePokemonPress]
+    [handlePokemonPress, activeSort, sortKey]
   );
 
   // Optimisation FlatList : extraction de clé
@@ -105,16 +199,66 @@ const PokemonListScreen: React.FC<PokemonListScreenProps> = ({ navigation }) => 
         </View>
       </View>
 
+      {/* Tri */}
+      <View style={[styles.sortContainer, { backgroundColor: colors.surface }]}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.sortChips}
+          keyboardShouldPersistTaps="handled"
+        >
+          {SORT_OPTIONS.map((option) => {
+            const isActive = option.key === sort.key;
+            return (
+              <TouchableOpacity
+                key={option.key}
+                style={[
+                  styles.sortChip,
+                  {
+                    backgroundColor: isActive ? colors.primary : colors.surfaceVariant,
+                    borderColor: isActive ? colors.primary : colors.border,
+                  },
+                ]}
+                onPress={() => handleSortPress(option.key)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isActive }}
+                accessibilityLabel={`Trier par ${option.label}${
+                  isActive ? (sort.direction === 'desc' ? ', décroissant' : ', croissant') : ''
+                }`}
+              >
+                <Text style={[styles.sortChipText, { color: isActive ? '#FFFFFF' : colors.text }]}>
+                  {option.label}
+                </Text>
+                {isActive && (
+                  <Ionicons
+                    name={sort.direction === 'desc' ? 'arrow-down' : 'arrow-up'}
+                    size={13}
+                    color="#FFFFFF"
+                  />
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
       {/* Résultats */}
       <View style={[styles.resultsHeader, { backgroundColor: colors.surface }]}>
+        {isUpdating && <ActivityIndicator size="small" color={colors.primary} style={styles.updatingIndicator} />}
         <Text style={[styles.resultsText, { color: colors.textSecondary }]}>
-          {filteredPokemon.length} Pokémon trouvé(s)
+          {sortedPokemon.length} Pokémon
+          {sortKey !== 'number' && (
+            <Text style={{ color: colors.textMuted }}>
+              {` · triés par ${activeSort.label.toLowerCase()} ${sortDirection === 'desc' ? '↓' : '↑'}`}
+            </Text>
+          )}
         </Text>
       </View>
 
       {/* Liste des Pokémon optimisée */}
       <FlatList
-        data={filteredPokemon}
+        ref={listRef}
+        data={sortedPokemon}
         renderItem={renderPokemonItem}
         keyExtractor={keyExtractor}
         numColumns={2}
@@ -178,7 +322,29 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   searchContainer: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 10,
+  },
+  sortContainer: {
+    paddingBottom: 6,
+  },
+  sortChips: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  sortChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 18,
+    borderWidth: 1,
+  },
+  sortChipText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   searchInputWrapper: {
     position: 'relative',
@@ -211,8 +377,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   resultsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
+  },
+  updatingIndicator: {
+    marginRight: 8,
+    transform: [{ scale: 0.8 }],
   },
   resultsText: {
     fontSize: 14,
