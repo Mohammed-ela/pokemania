@@ -5,7 +5,7 @@ export interface PokemonSprites {
   gmax?: {
     regular: string;
     shiny: string;
-  };
+  } | null;
 }
 
 export interface PokemonName {
@@ -47,7 +47,12 @@ export interface PokemonEvolution {
   mega?: {
     orbe: string;
     sprites: PokemonSprites;
-  }[];
+  }[] | null;
+}
+
+export interface PokemonForme {
+  region: string;
+  name: PokemonName;
 }
 
 export interface Pokemon {
@@ -81,6 +86,7 @@ export interface Pokemon {
   catch_rate: number;
   level_100: number;
   forme: number;
+  formes?: PokemonForme[] | null;
 }
 
 export interface PokemonListResponse {

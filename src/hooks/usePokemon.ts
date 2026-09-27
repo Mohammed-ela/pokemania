@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { PokemonAPI } from '../services/pokemonApi';
+import { MegaAPI } from '../services/megaApi';
 import { Pokemon } from '../types/pokemon';
 
 /**
@@ -25,9 +26,24 @@ export const usePokemonById = (id: number, region?: string) => {
     queryKey: ['pokemon', 'detail', id, region],
     queryFn: () => PokemonAPI.getPokemonById(id, region),
     enabled: !!id,
+    placeholderData: keepPreviousData, // Évite un écran vide en changeant de forme régionale
     staleTime: 1000 * 60 * 60, // 1 heure
     gcTime: 1000 * 60 * 60 * 24, // 24 heures
     retry: 3,
+  });
+};
+
+/**
+ * Hook pour récupérer les stats, types et talents des Méga-évolutions (PokéAPI)
+ */
+export const useMegaForms = (pokedexId: number, enabled: boolean) => {
+  return useQuery({
+    queryKey: ['pokemon', 'mega', pokedexId],
+    queryFn: () => MegaAPI.getMegaForms(pokedexId),
+    enabled: enabled && pokedexId > 0,
+    staleTime: 1000 * 60 * 60 * 24 * 7, // Données de jeu figées : 7 jours
+    gcTime: 1000 * 60 * 60 * 24 * 7,
+    retry: 1,
   });
 };
 

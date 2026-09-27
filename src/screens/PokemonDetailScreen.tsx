@@ -12,12 +12,28 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { PokemonDetailScreenProps } from '../types/navigation';
 import { useTheme } from '../context/ThemeContext';
-import { usePokemonById } from '../hooks/usePokemon';
+import { usePokemonById, useAllPokemon, useMegaForms } from '../hooks/usePokemon';
+import { mergeMegaForms } from '../services/megaApi';
 import { useFavorites } from '../context/FavoritesContext';
 import { getTypeColor } from '../utils/typeColors';
 
 const { width } = Dimensions.get('window');
 const blurhash = 'L6PZfSi_.AyE_3t7t7R**0o#DgR4';
+
+const REGION_LABELS: Record<string, string> = {
+  alola: 'Alola',
+  galar: 'Galar',
+  hisui: 'Hisui',
+  paldea: 'Paldea',
+};
+
+const getRegionLabel = (region: string) =>
+  REGION_LABELS[region] ?? region.charAt(0).toUpperCase() + region.slice(1);
+
+// Écart affiché à côté d'une stat en mode Méga (ex : "+30")
+const formatDelta = (delta: number) => (delta > 0 ? `+${delta}` : `${delta}`);
+const DELTA_UP = '#16A34A';
+const DELTA_DOWN = '#DC2626';
 
 // Composant StatBar memoizé avec support du thème
 const StatBar = memo<{
@@ -26,11 +42,17 @@ const StatBar = memo<{
   maxValue: number;
   color: string;
   colors: any;
-}>(({ label, value, maxValue, color, colors }) => {
-  const percentage = (value / maxValue) * 100;
+  baseValue?: number;
+}>(({ label, value, maxValue, color, colors, baseValue }) => {
+  const percentage = Math.min((value / maxValue) * 100, 100);
+  const basePercentage = baseValue !== undefined ? Math.min((baseValue / maxValue) * 100, 100) : undefined;
+  const delta = baseValue !== undefined ? value - baseValue : 0;
 
   return (
-    <View style={styles.statRow} accessibilityLabel={`${label}: ${value}`}>
+    <View
+      style={styles.statRow}
+      accessibilityLabel={`${label}: ${value}${delta !== 0 ? ` (${formatDelta(delta)})` : ''}`}
+    >
       <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
       <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
       <View style={[styles.statBarContainer, { backgroundColor: colors.border }]}>
@@ -40,7 +62,21 @@ const StatBar = memo<{
             { width: `${percentage}%`, backgroundColor: color },
           ]}
         />
+        {/* Repère de la stat de la forme normale */}
+        {basePercentage !== undefined && delta !== 0 && (
+          <View style={[styles.statBaseMarker, { left: `${basePercentage}%`, backgroundColor: colors.text }]} />
+        )}
       </View>
+      {baseValue !== undefined && (
+        <Text
+          style={[
+            styles.statDelta,
+            { color: delta > 0 ? DELTA_UP : delta < 0 ? DELTA_DOWN : colors.textMuted },
+          ]}
+        >
+          {delta !== 0 ? formatDelta(delta) : '='}
+        </Text>
+      )}
     </View>
   );
 });
@@ -50,15 +86,18 @@ const EvolutionItem = memo<{
   pokedexId: number;
   name: string;
   condition?: string;
-  onPress: (id: number) => void;
+  region?: string;
+  onPress: (id: number, region?: string) => void;
   colors: any;
-}>(({ pokedexId, name, condition, onPress, colors }) => {
-  const spriteUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokedexId}.png`;
+}>(({ pokedexId, name, condition, region, onPress, colors }) => {
+  const spriteUrl = region
+    ? `https://raw.githubusercontent.com/Yarkis01/TyraDex/images/sprites/${pokedexId}/regular_${region}.png`
+    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokedexId}.png`;
 
   return (
     <TouchableOpacity
       style={[styles.evolutionItem, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}
-      onPress={() => onPress(pokedexId)}
+      onPress={() => onPress(pokedexId, region)}
       accessibilityLabel={`Voir ${name}`}
       accessibilityRole="button"
     >
@@ -80,22 +119,67 @@ const EvolutionItem = memo<{
 
 const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, navigation }) => {
   const { pokemonId, pokemon: initialPokemon } = route.params;
+  const [region, setRegion] = useState<string | undefined>(route.params.region);
   const [isShiny, setIsShiny] = useState(false);
   const [showGmax, setShowGmax] = useState(false);
+  const [megaQualifier, setMegaQualifier] = useState<string | null>(null); // '' = Méga sans suffixe
   const { colors, isDark } = useTheme();
 
-  const { data: pokemon, isLoading, error } = usePokemonById(pokemonId);
+  const { data: pokemon, isLoading, error } = usePokemonById(pokemonId, region);
+  const { data: allPokemon } = useAllPokemon();
   const { isFavorite: checkIsFavorite, toggleFavorite } = useFavorites();
 
   const isFavorite = checkIsFavorite(pokemonId);
-  const displayPokemon = pokemon || initialPokemon;
+  // Les données passées en paramètre ne concernent que la forme normale
+  const displayPokemon = pokemon || (region ? undefined : initialPokemon);
+
+  // Formes régionales disponibles, lues depuis la liste complète (identique quelle que soit la forme affichée)
+  const regionalForms = useMemo(() => {
+    const base = allPokemon?.find((p) => p.pokedex_id === pokemonId);
+    return base?.formes ?? displayPokemon?.formes ?? [];
+  }, [allPokemon, pokemonId, displayPokemon?.formes]);
+
+  // Méga-évolutions : uniquement pour la forme normale (PokéAPI les rattache à l'espèce, pas à la forme régionale)
+  const { data: apiMegas, isLoading: isLoadingMegas } = useMegaForms(pokemonId, !region);
+  const megas = useMemo(
+    () => (region ? [] : mergeMegaForms(displayPokemon?.evolution?.mega ?? [], apiMegas)),
+    [region, displayPokemon?.evolution?.mega, apiMegas]
+  );
+  const currentMega =
+    megaQualifier !== null ? megas.find((m) => (m.qualifier ?? '') === megaQualifier) : undefined;
+
+  // Pokémon affiché : la Méga remplace types, stats, talents et faiblesses quand ses données sont connues
+  const shownPokemon = useMemo(() => {
+    if (!displayPokemon || !currentMega?.stats) return displayPokemon;
+    const suffix = currentMega.qualifier ? ` ${currentMega.qualifier}` : '';
+    return {
+      ...displayPokemon,
+      name: {
+        ...displayPokemon.name,
+        fr: `Méga-${displayPokemon.name.fr}${suffix}`,
+        en: `Mega ${displayPokemon.name.en}${suffix}`,
+      },
+      types: currentMega.types ?? displayPokemon.types,
+      stats: currentMega.stats,
+      talents: currentMega.talents ?? displayPokemon.talents,
+      resistances: currentMega.resistances ?? displayPokemon.resistances,
+    };
+  }, [displayPokemon, currentMega]);
+  const isMegaStats = !!currentMega?.stats;
+  const baseStats = isMegaStats ? displayPokemon?.stats : undefined;
 
   // Calculer le BST (Base Stat Total)
-  const bst = useMemo(() => {
-    if (!displayPokemon?.stats) return 0;
-    const { hp, atk, def, spe_atk, spe_def, vit } = displayPokemon.stats;
-    return hp + atk + def + spe_atk + spe_def + vit;
-  }, [displayPokemon?.stats]);
+  const getBst = (stats?: { hp: number; atk: number; def: number; spe_atk: number; spe_def: number; vit: number }) =>
+    stats ? stats.hp + stats.atk + stats.def + stats.spe_atk + stats.spe_def + stats.vit : 0;
+  const bst = useMemo(() => getBst(shownPokemon?.stats), [shownPokemon?.stats]);
+  const bstDelta = baseStats ? bst - getBst(baseStats) : 0;
+
+  // Types ajoutés par la Méga (ex : Dragon pour Méga-Dracaufeu X), mis en valeur
+  const newMegaTypes = useMemo(() => {
+    if (!isMegaStats || !displayPokemon) return new Set<string>();
+    const baseTypes = new Set(displayPokemon.types?.map((t) => t.name));
+    return new Set(shownPokemon?.types?.filter((t) => !baseTypes.has(t.name)).map((t) => t.name));
+  }, [isMegaStats, displayPokemon, shownPokemon?.types]);
 
   // Vérifier si Gigamax disponible
   const hasGmax = displayPokemon?.sprites?.gmax?.regular;
@@ -110,16 +194,39 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
 
   const toggleGmax = useCallback(() => {
     setShowGmax((prev) => !prev);
+    setMegaQualifier(null);
   }, []);
 
+  const toggleMega = useCallback((qualifier: string) => {
+    setMegaQualifier((prev) => (prev === qualifier ? null : qualifier));
+    setShowGmax(false);
+  }, []);
+
+  const selectRegion = useCallback((newRegion: string | undefined) => {
+    setRegion(newRegion);
+    setShowGmax(false);
+    setMegaQualifier(null);
+  }, []);
+
+  // Une évolution garde la forme régionale si elle en possède une (ex : Goupix d'Alola -> Feunard d'Alola)
+  const getEvolutionRegion = useCallback((id: number) => {
+    if (!region) return undefined;
+    const target = allPokemon?.find((p) => p.pokedex_id === id);
+    return target?.formes?.some((f) => f.region === region) ? region : undefined;
+  }, [region, allPokemon]);
+
   // Navigation vers un autre Pokémon (évolution)
-  const navigateToPokemon = useCallback((id: number) => {
-    navigation.push('PokemonDetail', { pokemonId: id });
+  const navigateToPokemon = useCallback((id: number, evolutionRegion?: string) => {
+    navigation.push('PokemonDetail', { pokemonId: id, region: evolutionRegion });
   }, [navigation]);
 
   // Obtenir l'URL du sprite actuel
   const getCurrentSprite = useCallback(() => {
     if (!displayPokemon?.sprites) return '';
+
+    if (currentMega) {
+      return isShiny ? currentMega.sprites.shiny : currentMega.sprites.regular;
+    }
 
     if (showGmax && displayPokemon.sprites.gmax) {
       return isShiny
@@ -130,9 +237,9 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
     return isShiny
       ? displayPokemon.sprites.shiny
       : displayPokemon.sprites.regular;
-  }, [displayPokemon?.sprites, isShiny, showGmax]);
+  }, [displayPokemon?.sprites, isShiny, showGmax, currentMega]);
 
-  if (isLoading && !initialPokemon) {
+  if (isLoading && !displayPokemon) {
     return (
       <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -141,7 +248,7 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
     );
   }
 
-  if (error && !initialPokemon) {
+  if (error && !displayPokemon) {
     return (
       <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
         <Text style={styles.errorText}>❌</Text>
@@ -193,7 +300,7 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header avec gradient basé sur le type */}
-        <View style={[styles.header, { backgroundColor: getTypeColor(displayPokemon.types?.[0]?.name || 'Normal') + (isDark ? '30' : '15') }]}>
+        <View style={[styles.header, { backgroundColor: getTypeColor(shownPokemon?.types?.[0]?.name || 'Normal') + (isDark ? '30' : '15') }]}>
           {/* Bouton favori moderne */}
           <TouchableOpacity
             style={[styles.favoriteButton, { backgroundColor: isFavorite ? '#EF4444' : colors.surface }]}
@@ -230,16 +337,76 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
                   <Text style={styles.spriteButtonText}>🔥 Gigamax</Text>
                 </TouchableOpacity>
               )}
+
+              {megas.map((mega) => {
+                const qualifier = mega.qualifier ?? '';
+                const isSelected = currentMega?.key === mega.key;
+                return (
+                  <TouchableOpacity
+                    key={mega.key}
+                    style={[styles.spriteButton, styles.megaButton, isSelected && styles.spriteButtonActive]}
+                    onPress={() => toggleMega(qualifier)}
+                    accessibilityLabel={`Afficher ${mega.label}`}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                  >
+                    <Text style={[styles.spriteButtonText, styles.megaButtonText]}>💎 {mega.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
+
+            {currentMega && (
+              <View style={styles.megaInfo}>
+                {currentMega.orbe && (
+                  <Text style={[styles.megaStone, { color: colors.textSecondary }]}>
+                    Méga-Gemme : {currentMega.orbe}
+                  </Text>
+                )}
+                {currentMega.orbeNote && (
+                  <Text style={[styles.megaStone, { color: colors.textSecondary }]}>{currentMega.orbeNote}</Text>
+                )}
+                {!currentMega.stats && (
+                  <Text style={[styles.megaStone, { color: colors.textMuted }]}>
+                    {isLoadingMegas ? 'Chargement des stats Méga…' : 'Stats Méga indisponibles hors-ligne'}
+                  </Text>
+                )}
+              </View>
+            )}
           </View>
+
+          {/* Sélecteur de forme régionale */}
+          {regionalForms.length > 0 && (
+            <View style={styles.formSelector}>
+              {[undefined, ...regionalForms.map((f) => f.region)].map((formRegion) => {
+                const isSelected = region === formRegion;
+                return (
+                  <TouchableOpacity
+                    key={formRegion ?? 'normal'}
+                    style={[
+                      styles.formChip,
+                      { backgroundColor: isSelected ? colors.primary : colors.surface, borderColor: colors.border },
+                    ]}
+                    onPress={() => selectRegion(formRegion)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                  >
+                    <Text style={[styles.formChipText, { color: isSelected ? '#FFFFFF' : colors.text }]}>
+                      {formRegion ? getRegionLabel(formRegion) : 'Normale'}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
 
           <View style={styles.basicInfo}>
             <Text style={[styles.pokemonNumber, { color: colors.textSecondary }]}>
               #{displayPokemon.pokedex_id.toString().padStart(3, '0')}
             </Text>
-            <Text style={[styles.pokemonName, { color: colors.text }]}>{displayPokemon.name.fr}</Text>
+            <Text style={[styles.pokemonName, { color: colors.text }]}>{shownPokemon?.name.fr}</Text>
             <Text style={[styles.pokemonNameEn, { color: colors.textSecondary }]}>
-              {displayPokemon.name.en} • {displayPokemon.name.jp}
+              {shownPokemon?.name.en} • {shownPokemon?.name.jp}
             </Text>
             <Text style={[styles.category, { color: colors.textMuted }]}>{displayPokemon.category}</Text>
           </View>
@@ -249,12 +416,18 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Types</Text>
           <View style={styles.typesContainer}>
-            {displayPokemon.types?.map((type, index) => (
+            {shownPokemon?.types?.map((type, index) => (
               <View
                 key={index}
-                style={[styles.typeTag, { backgroundColor: getTypeColor(type.name) }]}
+                style={[
+                  styles.typeTag,
+                  { backgroundColor: getTypeColor(type.name) },
+                  newMegaTypes.has(type.name) && styles.typeTagNew,
+                ]}
               >
-                <Text style={styles.typeText}>{type.name}</Text>
+                <Text style={styles.typeText}>
+                  {type.name}{newMegaTypes.has(type.name) ? ' ✦' : ''}
+                </Text>
               </View>
             ))}
           </View>
@@ -267,15 +440,20 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
             <View style={[styles.bstBadge, { backgroundColor: isDark ? '#312E81' : '#EEF2FF' }]}>
               <Text style={[styles.bstLabel, { color: isDark ? '#A5B4FC' : '#6366F1' }]}>BST</Text>
               <Text style={[styles.bstValue, { color: isDark ? '#C7D2FE' : '#4F46E5' }]}>{bst}</Text>
+              {bstDelta !== 0 && (
+                <Text style={[styles.bstDelta, { color: bstDelta > 0 ? DELTA_UP : DELTA_DOWN }]}>
+                  {formatDelta(bstDelta)}
+                </Text>
+              )}
             </View>
           </View>
           <View style={styles.statsContainer}>
-            <StatBar label="PV" value={displayPokemon.stats.hp} maxValue={255} color="#FF5959" colors={colors} />
-            <StatBar label="Attaque" value={displayPokemon.stats.atk} maxValue={255} color="#F5AC78" colors={colors} />
-            <StatBar label="Défense" value={displayPokemon.stats.def} maxValue={255} color="#FAE078" colors={colors} />
-            <StatBar label="Att. Spé" value={displayPokemon.stats.spe_atk} maxValue={255} color="#9DB7F5" colors={colors} />
-            <StatBar label="Déf. Spé" value={displayPokemon.stats.spe_def} maxValue={255} color="#A7DB8D" colors={colors} />
-            <StatBar label="Vitesse" value={displayPokemon.stats.vit} maxValue={255} color="#FA92B2" colors={colors} />
+            <StatBar label="PV" value={shownPokemon!.stats.hp} baseValue={baseStats?.hp} maxValue={255} color="#FF5959" colors={colors} />
+            <StatBar label="Attaque" value={shownPokemon!.stats.atk} baseValue={baseStats?.atk} maxValue={255} color="#F5AC78" colors={colors} />
+            <StatBar label="Défense" value={shownPokemon!.stats.def} baseValue={baseStats?.def} maxValue={255} color="#FAE078" colors={colors} />
+            <StatBar label="Att. Spé" value={shownPokemon!.stats.spe_atk} baseValue={baseStats?.spe_atk} maxValue={255} color="#9DB7F5" colors={colors} />
+            <StatBar label="Déf. Spé" value={shownPokemon!.stats.spe_def} baseValue={baseStats?.spe_def} maxValue={255} color="#A7DB8D" colors={colors} />
+            <StatBar label="Vitesse" value={shownPokemon!.stats.vit} baseValue={baseStats?.vit} maxValue={255} color="#FA92B2" colors={colors} />
           </View>
         </View>
 
@@ -291,6 +469,7 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
                     <EvolutionItem
                       pokedexId={evo.pokedex_id}
                       name={evo.name}
+                      region={getEvolutionRegion(evo.pokedex_id)}
                       onPress={navigateToPokemon}
                       colors={colors}
                     />
@@ -318,6 +497,7 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
                       pokedexId={evo.pokedex_id}
                       name={evo.name}
                       condition={evo.condition}
+                      region={getEvolutionRegion(evo.pokedex_id)}
                       onPress={navigateToPokemon}
                       colors={colors}
                     />
@@ -397,7 +577,7 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
         <View style={[styles.section, { backgroundColor: colors.surface }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>✨ Talents</Text>
           <View style={styles.talentsContainer}>
-            {displayPokemon.talents?.map((talent, index) => (
+            {shownPokemon?.talents?.map((talent, index) => (
               <View key={index} style={[
                 styles.talentItem,
                 { backgroundColor: colors.surfaceVariant, borderColor: colors.border },
@@ -415,8 +595,8 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
         </View>
 
         {/* Faiblesses et Résistances */}
-        {displayPokemon.resistances && displayPokemon.resistances.length > 0 && (
-          <ResistancesSection resistances={displayPokemon.resistances} colors={colors} />
+        {shownPokemon?.resistances && shownPokemon.resistances.length > 0 && (
+          <ResistancesSection resistances={shownPokemon.resistances} colors={colors} />
         )}
 
         {/* Spacer bottom */}
@@ -563,8 +743,66 @@ const styles = StyleSheet.create({
   },
   spriteButtons: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
     gap: 8,
     marginTop: 8,
+  },
+  megaButton: {
+    backgroundColor: '#0EA5E9',
+  },
+  megaButtonText: {
+    color: '#FFFFFF',
+  },
+  megaInfo: {
+    alignItems: 'center',
+    marginTop: 8,
+    gap: 2,
+  },
+  megaStone: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  statBaseMarker: {
+    position: 'absolute',
+    top: -2,
+    bottom: -2,
+    width: 2,
+    marginLeft: -1,
+    borderRadius: 1,
+    opacity: 0.5,
+  },
+  statDelta: {
+    width: 36,
+    textAlign: 'right',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  bstDelta: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginLeft: 4,
+  },
+  typeTagNew: {
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  formSelector: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  formChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  formChipText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   spriteButton: {
     paddingHorizontal: 14,

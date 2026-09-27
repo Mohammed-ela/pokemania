@@ -8,6 +8,7 @@ export type RootStackParamList = {
   PokemonDetail: {
     pokemonId: number;
     pokemon?: Pokemon;
+    region?: string;
   };
   Favorites: undefined;
   Search: {
