@@ -1,21 +1,27 @@
+import { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { Pokemon } from './pokemon';
 
-// Définition des paramètres de navigation
+// Onglets de la barre du bas
+export type TabParamList = {
+  Search: undefined;
+  Favorites: undefined;
+  Pokedex: undefined;
+  Compare: {
+    // Pokémon envoyé depuis une fiche détail pour être comparé
+    pokemonId?: number;
+  } | undefined;
+  Settings: undefined;
+};
+
+// Pile principale : les onglets, puis les écrans ouverts par-dessus
 export type RootStackParamList = {
-  Home: undefined;
-  PokemonList: undefined;
+  Tabs: NavigatorScreenParams<TabParamList>;
   PokemonDetail: {
     pokemonId: number;
     pokemon?: Pokemon;
     region?: string;
-  };
-  Favorites: undefined;
-  Search: {
-    filters?: {
-      type?: string;
-      generation?: number;
-    };
   };
   SearchResults: {
     filters: {
@@ -24,17 +30,21 @@ export type RootStackParamList = {
       generation?: number;
     };
   };
-  Settings: undefined;
 };
 
+type TabScreenProps<T extends keyof TabParamList> = CompositeScreenProps<
+  BottomTabScreenProps<TabParamList, T>,
+  NativeStackScreenProps<RootStackParamList>
+>;
+
 // Types de props pour chaque écran
-export type HomeScreenProps = NativeStackScreenProps<RootStackParamList, 'Home'>;
-export type PokemonListScreenProps = NativeStackScreenProps<RootStackParamList, 'PokemonList'>;
+export type PokemonListScreenProps = TabScreenProps<'Pokedex'>;
+export type FavoritesScreenProps = TabScreenProps<'Favorites'>;
+export type SearchScreenProps = TabScreenProps<'Search'>;
+export type CompareScreenProps = TabScreenProps<'Compare'>;
+export type SettingsScreenProps = TabScreenProps<'Settings'>;
 export type PokemonDetailScreenProps = NativeStackScreenProps<RootStackParamList, 'PokemonDetail'>;
-export type FavoritesScreenProps = NativeStackScreenProps<RootStackParamList, 'Favorites'>;
-export type SearchScreenProps = NativeStackScreenProps<RootStackParamList, 'Search'>;
 export type SearchResultsScreenProps = NativeStackScreenProps<RootStackParamList, 'SearchResults'>;
-export type SettingsScreenProps = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
 declare global {
   namespace ReactNavigation {

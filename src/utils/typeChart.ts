@@ -25,6 +25,12 @@ const TYPE_CHART: Record<string, Record<string, number>> = {
 
 export const ALL_TYPES = Object.keys(TYPE_CHART);
 
+/**
+ * Multiplicateur d'une attaque d'un type donné sur une combinaison de types défenseurs
+ */
+export const getAttackMultiplier = (attackType: string, defenseTypes: string[]): number =>
+  defenseTypes.reduce((total, defenseType) => total * (TYPE_CHART[attackType]?.[defenseType] ?? 1), 1);
+
 // Talents qui modifient les dégâts reçus (noms PokéAPI), comme le fait Tyradex pour ses faiblesses
 const ABILITY_MODIFIERS: Record<string, Record<string, number>> = {
   levitate: { Sol: 0 },

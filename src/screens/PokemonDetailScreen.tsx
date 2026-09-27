@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import { PokemonDetailScreenProps } from '../types/navigation';
 import { useTheme } from '../context/ThemeContext';
 import { usePokemonById, useAllPokemon, useMegaForms } from '../hooks/usePokemon';
@@ -308,6 +309,16 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
             accessibilityLabel={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
           >
             <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
+          </TouchableOpacity>
+
+          {/* Envoi vers le comparateur */}
+          <TouchableOpacity
+            style={[styles.favoriteButton, styles.compareButton, { backgroundColor: colors.surface }]}
+            onPress={() => navigation.navigate('Tabs', { screen: 'Compare', params: { pokemonId } })}
+            accessibilityRole="button"
+            accessibilityLabel="Comparer ce Pokémon"
+          >
+            <Ionicons name="git-compare-outline" size={22} color={colors.text} />
           </TouchableOpacity>
 
           <View style={styles.imageContainer}>
@@ -713,6 +724,10 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
     position: 'relative',
+  },
+  compareButton: {
+    right: undefined,
+    left: 16,
   },
   favoriteButton: {
     position: 'absolute',

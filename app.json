@@ -46,7 +46,8 @@
           "backgroundColor": "#DC2626",
           "imageWidth": 200
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "eas": {
