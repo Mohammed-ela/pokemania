@@ -6,12 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#DC2626"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.pokemania.pokedex",
@@ -31,15 +25,14 @@
     },
     "android": {
       "package": "com.pokemania.pokedex",
-      "versionCode": 5,
+      "versionCode": 6,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#DC2626"
       },
       "permissions": [
         "INTERNET"
-      ],
-      "edgeToEdgeEnabled": true
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -47,13 +40,12 @@
     "plugins": [
       "expo-secure-store",
       [
-        "expo-build-properties",
+        "expo-splash-screen",
         {
-          "android": {
-            "compileSdkVersion": 36,
-            "targetSdkVersion": 36,
-            "buildToolsVersion": "36.0.0"
-          }
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#DC2626",
+          "imageWidth": 200
         }
       ]
     ],

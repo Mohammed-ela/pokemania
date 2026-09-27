@@ -33,7 +33,7 @@ const AppNavigator: React.FC = () => {
             color: colors.text,
           },
           headerShadowVisible: false,
-          headerBackTitleVisible: false,
+          headerBackButtonDisplayMode: 'minimal',
           animation: 'slide_from_right',
         }}
       >
