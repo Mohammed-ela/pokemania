@@ -52,3 +52,7 @@ secrets/
 # Logs
 logs/
 *.log
+
+# Builds Android
+*.aab
+*.apk
