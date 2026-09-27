@@ -19,6 +19,7 @@
     "@tanstack/react-query-persist-client": "^5.90.21",
     "axios": "^1.11.0",
     "expo": "~57.0.25",
+    "expo-constants": "~57.0.19",
     "expo-font": "~57.0.4",
     "expo-image": "~57.0.5",
     "expo-splash-screen": "~57.0.9",

@@ -67,17 +67,11 @@ export const useFilteredPokemon = (
 /**
  * Hook pour obtenir les types uniques
  */
-export const usePokemonTypes = (allPokemon: Pokemon[] | undefined) => {
-  if (!allPokemon || allPokemon.length === 0) return [];
-  
-  return PokemonAPI.getUniqueTypes(allPokemon);
-};
+export const usePokemonTypes = (allPokemon: Pokemon[] | undefined) =>
+  useMemo(() => (allPokemon?.length ? PokemonAPI.getUniqueTypes(allPokemon) : []), [allPokemon]);
 
 /**
  * Hook pour obtenir les générations uniques
  */
-export const usePokemonGenerations = (allPokemon: Pokemon[] | undefined) => {
-  if (!allPokemon || allPokemon.length === 0) return [];
-  
-  return PokemonAPI.getUniqueGenerations(allPokemon);
-};
+export const usePokemonGenerations = (allPokemon: Pokemon[] | undefined) =>
+  useMemo(() => (allPokemon?.length ? PokemonAPI.getUniqueGenerations(allPokemon) : []), [allPokemon]);

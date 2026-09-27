@@ -6,7 +6,6 @@ import {
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -17,8 +16,8 @@ import { usePokemonById, useAllPokemon, useMegaForms } from '../hooks/usePokemon
 import { mergeMegaForms } from '../services/megaApi';
 import { useFavorites } from '../context/FavoritesContext';
 import { getTypeColor } from '../utils/typeColors';
+import { getBst } from '../utils/pokemon';
 
-const { width } = Dimensions.get('window');
 const blurhash = 'L6PZfSi_.AyE_3t7t7R**0o#DgR4';
 
 const REGION_LABELS: Record<string, string> = {
@@ -170,9 +169,7 @@ const PokemonDetailScreen: React.FC<PokemonDetailScreenProps> = ({ route, naviga
   const baseStats = isMegaStats ? displayPokemon?.stats : undefined;
 
   // Calculer le BST (Base Stat Total)
-  const getBst = (stats?: { hp: number; atk: number; def: number; spe_atk: number; spe_def: number; vit: number }) =>
-    stats ? stats.hp + stats.atk + stats.def + stats.spe_atk + stats.spe_def + stats.vit : 0;
-  const bst = useMemo(() => getBst(shownPokemon?.stats), [shownPokemon?.stats]);
+  const bst = useMemo(() => (shownPokemon?.stats ? getBst(shownPokemon.stats) : 0), [shownPokemon?.stats]);
   const bstDelta = baseStats ? bst - getBst(baseStats) : 0;
 
   // Types ajoutés par la Méga (ex : Dragon pour Méga-Dracaufeu X), mis en valeur

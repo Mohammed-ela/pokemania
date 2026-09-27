@@ -17,28 +17,17 @@ import { CompareScreenProps } from '../types/navigation';
 import { useTheme } from '../context/ThemeContext';
 import { useAllPokemon } from '../hooks/usePokemon';
 import { PokemonAPI } from '../services/pokemonApi';
-import { Pokemon, PokemonStats } from '../types/pokemon';
+import { Pokemon } from '../types/pokemon';
 import { getTypeColor } from '../utils/typeColors';
 import { getAttackMultiplier } from '../utils/typeChart';
+import { STAT_LABELS, getBst } from '../utils/pokemon';
 
 const blurhash = 'L6PZfSi_.AyE_3t7t7R**0o#DgR4';
 
 // Couleur attribuée à chaque côté de la comparaison
 const SIDE_COLORS = ['#6366F1', '#F97316'] as const;
 
-const STATS: { key: keyof PokemonStats; label: string }[] = [
-  { key: 'hp', label: 'PV' },
-  { key: 'atk', label: 'Attaque' },
-  { key: 'def', label: 'Défense' },
-  { key: 'spe_atk', label: 'Att. Spé' },
-  { key: 'spe_def', label: 'Déf. Spé' },
-  { key: 'vit', label: 'Vitesse' },
-];
-
 const MAX_STAT = 255;
-
-const getBst = (stats: PokemonStats) =>
-  stats.hp + stats.atk + stats.def + stats.spe_atk + stats.spe_def + stats.vit;
 
 const formatMultiplier = (multiplier: number) =>
   multiplier === 0 ? '×0' : `×${Number.isInteger(multiplier) ? multiplier : multiplier.toString().replace('.', ',')}`;
@@ -348,7 +337,7 @@ const CompareScreen: React.FC<CompareScreenProps> = ({ route, navigation }) => {
     if (!left || !right) return null;
     let leftWins = 0;
     let rightWins = 0;
-    STATS.forEach(({ key }) => {
+    STAT_LABELS.forEach(({ key }) => {
       if (left.stats[key] > right.stats[key]) leftWins++;
       if (right.stats[key] > left.stats[key]) rightWins++;
     });
@@ -420,7 +409,7 @@ const CompareScreen: React.FC<CompareScreenProps> = ({ route, navigation }) => {
             {/* Stats */}
             <View style={[styles.section, { backgroundColor: colors.surface }]}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Statistiques</Text>
-              {STATS.map(({ key, label }) => (
+              {STAT_LABELS.map(({ key, label }) => (
                 <StatCompareRow
                   key={key}
                   label={label}

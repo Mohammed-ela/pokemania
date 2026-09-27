@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SplashScreen from 'expo-splash-screen';
@@ -85,23 +85,32 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
-  const setPreference = async (newPreference: ThemePreference) => {
+  const setPreference = useCallback((newPreference: ThemePreference) => {
     setPreferenceState(newPreference);
-    try {
-      await AsyncStorage.setItem(THEME_STORAGE_KEY, newPreference);
-    } catch (error) {
+    AsyncStorage.setItem(THEME_STORAGE_KEY, newPreference).catch(() => {
       // Ignorer l'erreur de sauvegarde
-    }
-  };
+    });
+  }, []);
 
   const mode: ThemeMode =
     preference === 'system' ? (systemScheme === 'dark' ? 'dark' : 'light') : preference;
-  const colors = mode === 'light' ? lightColors : darkColors;
+
+  // Valeur stable : les écrans ne se redessinent que si le thème change vraiment
+  const value = useMemo(
+    () => ({
+      mode,
+      preference,
+      colors: mode === 'light' ? lightColors : darkColors,
+      setPreference,
+      isDark: mode === 'dark',
+    }),
+    [mode, preference, setPreference]
+  );
 
   if (!isReady) return null;
 
   return (
-    <ThemeContext.Provider value={{ mode, preference, colors, setPreference, isDark: mode === 'dark' }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

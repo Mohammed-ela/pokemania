@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Pokemon } from '../types/pokemon';
+import { normalizeText } from '../utils/pokemon';
 
 // Configuration de l'API Tyradex
 const API_BASE_URL = 'https://tyradex.app/api/v1';
@@ -9,21 +10,9 @@ const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
     'User-Agent': 'Pokemania-App/1.0.0', // Header de politesse
   },
 });
-
-// Intercepteur pour gérer les erreurs
-apiClient.interceptors.request.use(
-  (config) => config,
-  (error) => Promise.reject(error)
-);
-
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => Promise.reject(error)
-);
 
 export class PokemonAPI {
   /**
@@ -61,13 +50,14 @@ export class PokemonAPI {
   static searchPokemon(query: string, allPokemon: Pokemon[]): Pokemon[] {
     if (!query.trim() || !allPokemon) return allPokemon || [];
 
-    const searchTerm = query.toLowerCase().trim();
-    
+    // Recherche insensible aux accents : "electhor" trouve Électhor
+    const searchTerm = normalizeText(query);
+
     return allPokemon.filter(pokemon => {
       if (!pokemon) return false;
-      
-      const frName = pokemon.name?.fr?.toLowerCase() || '';
-      const enName = pokemon.name?.en?.toLowerCase() || '';
+
+      const frName = normalizeText(pokemon.name?.fr || '');
+      const enName = normalizeText(pokemon.name?.en || '');
       const pokemonId = pokemon.pokedex_id?.toString() || '';
       
       return frName.includes(searchTerm) ||

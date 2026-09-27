@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
@@ -13,12 +12,9 @@ import { useTheme } from '../context/ThemeContext';
 import { Pokemon } from '../types/pokemon';
 import { useFavorites } from '../context/FavoritesContext';
 import { useAllPokemon } from '../hooks/usePokemon';
-import PokemonCard from '../components/PokemonCard';
+import PokemonGrid from '../components/PokemonGrid';
 
-// Hauteur estimée d'une carte pour optimiser le scroll
-const ITEM_HEIGHT = 180;
-
-const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
+const FavoritesScreen: React.FC<FavoritesScreenProps> = () => {
   const { favoriteIds, isLoading: isLoadingFavorites, clearFavorites } = useFavorites();
   const { data: allPokemon, isLoading: isLoadingPokemon } = useAllPokemon();
   const { colors } = useTheme();
@@ -32,41 +28,6 @@ const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
       .map((id) => byId.get(id))
       .filter((pokemon): pokemon is Pokemon => pokemon !== undefined);
   }, [allPokemon, favoriteIds]);
-
-  // Callback memoizé pour la navigation
-  const handlePokemonPress = useCallback(
-    (pokemon: Pokemon) => {
-      navigation.navigate('PokemonDetail', {
-        pokemonId: pokemon.pokedex_id,
-        pokemon: pokemon,
-      });
-    },
-    [navigation]
-  );
-
-  // Render item avec le composant memoizé
-  const renderPokemonItem = useCallback(
-    ({ item }: { item: Pokemon }) => (
-      <PokemonCard pokemon={item} onPress={handlePokemonPress} />
-    ),
-    [handlePokemonPress]
-  );
-
-  // Optimisation FlatList : extraction de clé
-  const keyExtractor = useCallback(
-    (item: Pokemon) => item.pokedex_id.toString(),
-    []
-  );
-
-  // Optimisation FlatList : calcul de layout
-  const getItemLayout = useCallback(
-    (_: unknown, index: number) => ({
-      length: ITEM_HEIGHT,
-      offset: ITEM_HEIGHT * Math.floor(index / 2),
-      index,
-    }),
-    []
-  );
 
   const handleClearAll = useCallback(() => {
     clearFavorites();
@@ -133,21 +94,7 @@ const FavoritesScreen: React.FC<FavoritesScreenProps> = ({ navigation }) => {
       </View>
 
       {/* Liste des favoris optimisée */}
-      <FlatList
-        data={favorites}
-        renderItem={renderPokemonItem}
-        keyExtractor={keyExtractor}
-        numColumns={2}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        columnWrapperStyle={styles.row}
-        // Optimisations de performance
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={10}
-        windowSize={10}
-        initialNumToRender={10}
-        getItemLayout={getItemLayout}
-      />
+      <PokemonGrid data={favorites} />
     </SafeAreaView>
   );
 };
@@ -219,12 +166,6 @@ const styles = StyleSheet.create({
     color: '#DC2626',
     fontWeight: '700',
     letterSpacing: 0.2,
-  },
-  listContainer: {
-    padding: 8,
-  },
-  row: {
-    justifyContent: 'space-around',
   },
 });
 

@@ -3,19 +3,14 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SearchResultsScreenProps } from '../types/navigation';
 import { useTheme } from '../context/ThemeContext';
-import { Pokemon } from '../types/pokemon';
 import { useAllPokemon, useFilteredPokemon } from '../hooks/usePokemon';
-import PokemonCard from '../components/PokemonCard';
-
-// Hauteur estimée d'une carte pour optimiser le scroll
-const ITEM_HEIGHT = 180;
+import PokemonGrid from '../components/PokemonGrid';
 
 const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({
   navigation,
@@ -27,41 +22,6 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({
 
   // Appliquer les filtres reçus
   const filteredPokemon = useFilteredPokemon(allPokemon, filters);
-
-  // Callback memoizé pour la navigation
-  const handlePokemonPress = useCallback(
-    (pokemon: Pokemon) => {
-      navigation.navigate('PokemonDetail', {
-        pokemonId: pokemon.pokedex_id,
-        pokemon: pokemon,
-      });
-    },
-    [navigation]
-  );
-
-  // Render item avec le composant memoizé
-  const renderPokemonItem = useCallback(
-    ({ item }: { item: Pokemon }) => (
-      <PokemonCard pokemon={item} onPress={handlePokemonPress} />
-    ),
-    [handlePokemonPress]
-  );
-
-  // Optimisation FlatList : extraction de clé
-  const keyExtractor = useCallback(
-    (item: Pokemon) => item.pokedex_id.toString(),
-    []
-  );
-
-  // Optimisation FlatList : calcul de layout
-  const getItemLayout = useCallback(
-    (_: unknown, index: number) => ({
-      length: ITEM_HEIGHT,
-      offset: ITEM_HEIGHT * Math.floor(index / 2),
-      index,
-    }),
-    []
-  );
 
   const getFilterDescription = useCallback(() => {
     const parts = [];
@@ -128,21 +88,7 @@ const SearchResultsScreen: React.FC<SearchResultsScreenProps> = ({
 
       {/* Liste des résultats optimisée */}
       {filteredPokemon.length > 0 ? (
-        <FlatList
-          data={filteredPokemon}
-          renderItem={renderPokemonItem}
-          keyExtractor={keyExtractor}
-          numColumns={2}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-          columnWrapperStyle={styles.row}
-          // Optimisations de performance
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={10}
-          windowSize={10}
-          initialNumToRender={10}
-          getItemLayout={getItemLayout}
-        />
+        <PokemonGrid data={filteredPokemon} />
       ) : (
         <View style={styles.noResultsContainer}>
           <Text style={styles.noResultsEmoji}>🔍</Text>
@@ -252,12 +198,6 @@ const styles = StyleSheet.create({
     color: '#1E40AF',
     fontWeight: '700',
     letterSpacing: 0.2,
-  },
-  listContainer: {
-    padding: 8,
-  },
-  row: {
-    justifyContent: 'space-around',
   },
   noResultsContainer: {
     flex: 1,

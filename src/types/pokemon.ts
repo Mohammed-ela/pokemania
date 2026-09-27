@@ -68,13 +68,6 @@ export interface Pokemon {
   }[];
   stats: PokemonStats;
   resistances: PokemonResistance[];
-  apiTypes: PokemonType[];
-  apiGeneration: number;
-  apiResistances: PokemonResistance[];
-  resistanceModifyingAbilitiesForApi: any[];
-  apiEvolutions: PokemonEvolution[];
-  apiPreEvolution: any[];
-  apiResistancesWithAbilities: PokemonResistance[];
   evolution?: PokemonEvolution;
   height: string;
   weight: string;
@@ -87,23 +80,4 @@ export interface Pokemon {
   level_100: number;
   forme: number;
   formes?: PokemonForme[] | null;
-}
-
-export interface PokemonListResponse {
-  results: Pokemon[];
-}
-
-// Types pour les filtres et recherche
-export interface PokemonFilters {
-  type?: string;
-  generation?: number;
-  searchTerm?: string;
-}
-
-// Types pour les états de l'application
-export interface PokemonState {
-  pokemons: Pokemon[];
-  favorites: number[];
-  loading: boolean;
-  error: string | null;
 }

@@ -9,9 +9,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SettingsScreenProps } from '../types/navigation';
+import Constants from 'expo-constants';
 import { useTheme, ThemePreference } from '../context/ThemeContext';
+import { useAllPokemon } from '../hooks/usePokemon';
 
-const APP_VERSION = '1.0.0';
+// Version lue dans app.json : plus besoin de la mettre à jour à la main
+const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
 const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
   { value: 'system', label: 'Système' },
@@ -21,6 +24,9 @@ const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
   const { colors, preference, setPreference } = useTheme();
+  const { data: allPokemon } = useAllPokemon();
+  // Sans MissingNo. (n°0)
+  const pokemonCount = allPokemon?.filter((p) => p.pokedex_id > 0).length ?? 1025;
 
   const openLink = (url: string) => {
     Linking.openURL(url).catch(() => {});
@@ -85,7 +91,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
               <Text style={styles.settingIcon}>🎮</Text>
               <View>
                 <Text style={[styles.settingTitle, { color: colors.text }]}>Pokémon</Text>
-                <Text style={[styles.settingDescription, { color: colors.textMuted }]}>1025 Pokémon disponibles</Text>
+                <Text style={[styles.settingDescription, { color: colors.textMuted }]}>{pokemonCount} Pokémon disponibles</Text>
               </View>
             </View>
           </View>
